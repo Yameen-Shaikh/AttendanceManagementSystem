@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance Report{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="gradient-text">Attendance Report for {{ course.name }}</h1>
+    <p>This is a placeholder for the attendance report.</p>
+    <a href="{% url 'teacher_dashboard' %}" class="btn-primary">Back to Dashboard</a>
+</div>
+{% endblock %}

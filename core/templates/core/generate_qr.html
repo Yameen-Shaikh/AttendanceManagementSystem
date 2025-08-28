@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Generate QR Code{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="gradient-text">Generate QR Code for {{ course.name }}</h1>
+    <p>Scan this QR code to mark attendance.</p>
+    <div id="qrcode-display"></div>
+    <p>QR Code Data: <strong>{{ qr_code_data }}</strong></p>
+    <a href="{% url 'teacher_dashboard' %}" class="btn-primary">Back to Dashboard</a>
+</div>
+
+<script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+<script>
+    var qrcode = new QRCode(document.getElementById("qrcode-display"), {
+        text: "{{ qr_code_data }}",
+        width: 256,
+        height: 256,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+    });
+</script>
+{% endblock %}

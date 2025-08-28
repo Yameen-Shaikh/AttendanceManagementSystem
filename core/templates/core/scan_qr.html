@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Scan QR Code{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="gradient-text">Scan QR Code</h1>
+    <div id="qr-reader" style="width: 500px"></div>
+    <div id="qr-reader-results"></div>
+</div>
+
+<script>
+    function onScanSuccess(decodedText, decodedResult) {
+        console.log(`Code matched = ${decodedText}`, decodedResult);
+        // Send the QR code data to the server
+        fetch("{% url 'mark_attendance' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                'qr_code_data': decodedText
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('qr-reader-results').innerHTML = `<div class="success">${data.message}</div>`;
+            } else {
+                document.getElementById('qr-reader-results').innerHTML = `<div class="error">${data.message}</div>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('qr-reader-results').innerHTML = `<div class="error">An error occurred.</div>`;
+        });
+    }
+
+    var html5QrcodeScanner = new Html5QrcodeScanner(
+        "qr-reader", { fps: 10, qrbox: 250 });
+    html5QrcodeScanner.render(onScanSuccess);
+</script>
+{% endblock %}

@@ -8,6 +8,7 @@ from django.views.decorators.http import require_POST
 import json
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
+from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 
 @login_required
 def generate_qr_code(request, course_id):
@@ -62,18 +63,76 @@ def mark_attendance(request):
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)})
 
+@ensure_csrf_cookie
+@csrf_protect
 def login_view(request):
+    if request.user.is_authenticated:
+        if request.user.role == 'Teacher':
+            return redirect('teacher_dashboard')
+        elif request.user.role == 'Student':
+            return redirect('student_dashboard')
+        else:
+            return redirect('/admin/')
+
     if request.method == 'POST':
-        email = request.POST.get('email')
+        username = request.POST.get('username')
         password = request.POST.get('password')
-        try:
-            user = CustomUser.objects.get(email=email)
-            user = authenticate(request, username=user.username, password=password)
-            if user is not None:
-                login(request, user)
-                return redirect('/dashboard/') # Redirect to a success page.
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            if user.role == 'Teacher':
+                return redirect('teacher_dashboard')
+            elif user.role == 'Student':
+                return redirect('student_dashboard')
             else:
-                messages.error(request, 'Invalid email or password.')
-        except CustomUser.DoesNotExist:
-            messages.error(request, 'Invalid email or password.')
+                return redirect('/admin/')
+        else:
+            messages.error(request, 'Invalid username or password.')
     return render(request, 'core/login.html')
+
+@login_required
+def teacher_dashboard(request):
+    if request.user.role != 'Teacher':
+        return HttpResponseForbidden("You are not authorized to view this page.")
+    courses = Course.objects.filter(teacher=request.user)
+    return render(request, 'core/teacher_dashboard.html', {'courses': courses})
+
+@login_required
+def view_report(request, course_id):
+    course = get_object_or_404(Course, pk=course_id)
+    if request.user.role != 'Teacher' or request.user != course.teacher:
+        return HttpResponseForbidden("You are not authorized to view this report.")
+    # Placeholder for report generation logic
+    return render(request, 'core/view_report.html', {'course': course})
+
+@login_required
+def student_dashboard(request):
+    if request.user.role != 'Student':
+        return HttpResponseForbidden("You are not authorized to view this page.")
+    
+    enrolled_courses = request.user.enrolled_courses.all()
+    enrollments = []
+    for course in enrolled_courses:
+        total_lectures = Attendance.objects.filter(course=course).values('lecture_date').distinct().count()
+        attended_lectures = Attendance.objects.filter(course=course, student=request.user, is_present=True).count()
+        attendance_percentage = (attended_lectures / total_lectures) * 100 if total_lectures > 0 else 0
+        enrollments.append({
+            'course': course,
+            'attendance_percentage': round(attendance_percentage)
+        })
+    
+    return render(request, 'core/student_dashboard.html', {'enrollments': enrollments})
+
+@login_required
+def scan_qr_code(request):
+    return render(request, 'core/scan_qr.html')
+
+@login_required
+def profile(request):
+    return render(request, 'core/profile.html')
+
+from django.contrib.auth import logout
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')

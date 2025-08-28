@@ -1,4 +1,3 @@
-```python
 import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
@@ -14,15 +13,12 @@ class CustomUser(AbstractUser):
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
-    
-    first_name = None
-    last_name = None
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['name']
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = ['name', 'email']
 
     def __str__(self):
-        return self.email
+        return self.username
 
 class Course(models.Model):
     name = models.CharField(max_length=255)
@@ -49,6 +45,5 @@ class QRCode(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
 
-    def __str__(self):
+    def __str__(Sself):
         return f"QRCode for {self.course.name}"
-```
