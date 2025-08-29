@@ -4,6 +4,7 @@ from django.utils import timezone
 from datetime import timedelta
 from .models import Course, QRCode, Attendance, CustomUser
 from django.http import JsonResponse, HttpResponseForbidden
+from django.core.exceptions import PermissionDenied
 from django.views.decorators.http import require_POST
 import json
 from django.contrib.auth import authenticate, login
@@ -93,7 +94,7 @@ def login_view(request):
 @login_required
 def teacher_dashboard(request):
     if request.user.role != 'Teacher':
-        return HttpResponseForbidden("You are not authorized to view this page.")
+        raise PermissionDenied
     courses = Course.objects.filter(teacher=request.user)
     return render(request, 'core/teacher_dashboard.html', {'courses': courses})
 
@@ -102,13 +103,39 @@ def view_report(request, course_id):
     course = get_object_or_404(Course, pk=course_id)
     if request.user.role != 'Teacher' or request.user != course.teacher:
         return HttpResponseForbidden("You are not authorized to view this report.")
-    # Placeholder for report generation logic
-    return render(request, 'core/view_report.html', {'course': course})
+
+    students = course.students.all()
+    total_students = students.count()
+    total_lectures = Attendance.objects.filter(course=course).values('lecture_date').distinct().count()
+
+    student_reports = []
+    total_attendance_sum = 0
+
+    for student in students:
+        attended_lectures = Attendance.objects.filter(course=course, student=student, is_present=True).count()
+        attendance_percentage = (attended_lectures / total_lectures) * 100 if total_lectures > 0 else 0
+        total_attendance_sum += attendance_percentage
+        student_reports.append({
+            'student_name': student.name,
+            'total_attended': attended_lectures,
+            'total_missed': total_lectures - attended_lectures,
+            'attendance_percentage': round(attendance_percentage)
+        })
+
+    average_attendance = round(total_attendance_sum / total_students) if total_students > 0 else 0
+
+    context = {
+        'course': course,
+        'total_students': total_students,
+        'average_attendance': average_attendance,
+        'student_reports': student_reports,
+    }
+    return render(request, 'core/view_report.html', context)
 
 @login_required
 def student_dashboard(request):
     if request.user.role != 'Student':
-        return HttpResponseForbidden("You are not authorized to view this page.")
+        raise PermissionDenied
     
     enrolled_courses = request.user.enrolled_courses.all()
     enrollments = []

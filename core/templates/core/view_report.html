@@ -1,11 +1,37 @@
 {% extends 'base.html' %}
 
-{% block title %}Attendance Report{% endblock %}
+{% block title %}Attendance Report for {{ course.name }}{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1 class="gradient-text">Attendance Report for {{ course.name }}</h1>
-    <p>This is a placeholder for the attendance report.</p>
-    <a href="{% url 'teacher_dashboard' %}" class="btn-primary">Back to Dashboard</a>
-</div>
+    <h1>Attendance Report for {{ course.name }}</h1>
+
+    <a href="#" class="btn btn-primary" style="margin-bottom: 1rem; display: inline-block;">Export as CSV</a>
+
+    <div class="card">
+        <h2>Report Summary</h2>
+        <p><strong>Average Attendance:</strong> {{ average_attendance }}%</p>
+        <p><strong>Total Students:</strong> {{ total_students }}</p>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Student Name</th>
+                <th>Total Attended</th>
+                <th>Total Missed</th>
+                <th>Attendance %</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for report in student_reports %}
+                <tr>
+                    <td>{{ report.student_name }}</td>
+                    <td>{{ report.total_attended }}</td>
+                    <td>{{ report.total_missed }}</td>
+                    <td>{{ report.attendance_percentage }}%</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
 {% endblock %}

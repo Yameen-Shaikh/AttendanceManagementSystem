@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}My Dashboard{% endblock %}
+
+{% block content %}
+<style>
+    .progress-bar {
+        background-color: #e9ecef;
+        border-radius: .25rem;
+        height: 1rem;
+        overflow: hidden;
+        width: 100%;
+    }
+
+    .progress {
+        background-color: #007bff;
+        height: 100%;
+    }
+</style>
+
+<h1>My Enrolled Courses</h1>
+
+{% for enrollment in enrollments %}
+    <div class="card">
+        <h2>{{ enrollment.course.name }}</h2>
+        <p>Attendance: <strong>{{ enrollment.attendance_percentage }}%</strong></p>
+        <div class="progress-bar">
+            <div class="progress" style="width: {{ enrollment.attendance_percentage }}%;"></div>
+        </div>
+    </div>
+{% endfor %}
+
+<a href="{% url 'scan_qr_code' %}" class="btn btn-primary">Mark Today's Attendance</a>
+
+{% endblock %}
