@@ -186,3 +186,13 @@ input[type="password"] {
     min-height: calc(100vh - 100px); /* Adjust based on navbar height */
 }
 
+.card {
+    background: #F4F7FB;
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: -5px -5px 10px rgba(255, 255, 255, 0.7), 5px 5px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 100%; /* Changed from 400px to be responsive */
+    border: none;
+}
+

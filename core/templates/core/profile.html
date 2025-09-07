@@ -3,18 +3,20 @@
 {% block title %}My Profile{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1 class="gradient-text">My Profile</h1>
-    <div class="card">
-        <p><strong>Username:</strong> {{ user.username }}</p>
-        <p><strong>Email:</strong> {{ user.email }}</p>
-        <p><strong>Name:</strong> {{ user.name }}</p>
-        <p><strong>Role:</strong> {{ user.role }}</p>
-        {% if user.role == 'Teacher' %}
-            <a href="{% url 'teacher_dashboard' %}" class="btn-primary">Back to Dashboard</a>
-        {% else %}
-            <a href="{% url 'student_dashboard' %}" class="btn-primary">Back to Dashboard</a>
-        {% endif %}
+    <div class="card" style="width: 25rem;">
+        <div class="card-body">
+            <h1 class="gradient-text text-center mb-4">My Profile</h1>
+            <p><strong>Username:</strong> {{ user.username }}</p>
+            <p><strong>Email:</strong> {{ user.email }}</p>
+            <p><strong>Name:</strong> {{ user.name }}</p>
+            <p><strong>Role:</strong> {{ user.role }}</p>
+            <div class="text-center mt-4">
+                {% if user.role == 'Teacher' %}
+                    <a href="{% url 'teacher_dashboard' %}" class="btn btn-primary">Back to Dashboard</a>
+                {% else %}
+                    <a href="{% url 'student_dashboard' %}" class="btn btn-primary">Back to Dashboard</a>
+                {% endif %}
+            </div>
+        </div>
     </div>
-</div>
 {% endblock %}
