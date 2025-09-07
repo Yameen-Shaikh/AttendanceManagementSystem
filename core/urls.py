@@ -3,6 +3,7 @@ from . import views
 
 urlpatterns = [
     path('', views.login_view, name='login'),
+    path('register/', views.register_view, name='register'),
     path('dashboard/', views.teacher_dashboard, name='teacher_dashboard'),
     path('course/<int:course_id>/generate-qr/', views.generate_qr_code, name='generate_qr_code'),
     path('course/<int:course_id>/report/', views.view_report, name='view_report'),

@@ -8,6 +8,7 @@ from django.core.exceptions import PermissionDenied
 from django.views.decorators.http import require_POST
 import json
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.hashers import make_password
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 
@@ -25,8 +26,10 @@ def generate_qr_code(request, course_id):
     context = {
         'course': course,
         'qr_code_data': str(qr_code.qr_code_data),
+        'subjects': course.teacher.subjects,
+        'expires_at': expires_at.isoformat(),
     }
-    return render(request, 'generate_qr.html', context)
+    return render(request, 'core/generate_qr.html', context)
 
 @login_required
 @require_POST
@@ -76,9 +79,9 @@ def login_view(request):
             return redirect('/admin/')
 
     if request.method == 'POST':
-        username = request.POST.get('username')
+        email = request.POST.get('email')
         password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
+        user = authenticate(request, username=email, password=password)
         if user is not None:
             login(request, user)
             if user.role == 'Teacher':
@@ -96,7 +99,12 @@ def teacher_dashboard(request):
     if request.user.role != 'Teacher':
         raise PermissionDenied
     courses = Course.objects.filter(teacher=request.user)
-    return render(request, 'core/teacher_dashboard.html', {'courses': courses})
+    subjects = request.user.subjects
+    context = {
+        'courses': courses,
+        'subjects': subjects
+    }
+    return render(request, 'core/teacher_dashboard.html', context)
 
 @login_required
 def view_report(request, course_id):
@@ -163,3 +171,31 @@ from django.contrib.auth import logout
 def logout_view(request):
     logout(request)
     return redirect('login')
+
+def register_view(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        role = request.POST.get('role')
+        subjects = request.POST.get('subjects', '')
+
+        if CustomUser.objects.filter(email=email).exists():
+            messages.error(request, 'Email already exists.')
+            return redirect('register')
+
+        user = CustomUser.objects.create(
+            name=name,
+            email=email,
+            password=make_password(password),
+            role=role
+        )
+        
+        if role == 'Teacher':
+            user.subjects = subjects
+            user.save()
+        
+        messages.success(request, 'Registration successful. Please login.')
+        return redirect('login')
+
+    return render(request, 'core/register.html')

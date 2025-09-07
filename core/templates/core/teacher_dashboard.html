@@ -3,31 +3,36 @@
 {% block title %}Teacher Dashboard{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <h1 class="gradient-text text-center mb-5">My Courses</h1>
-    <div class="row justify-content-center">
-        {% for course in courses %}
-        <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card h-100 text-center">
-                <div class="card-body d-flex flex-column">
-                    <h5 class="card-title">{{ course.name }}</h5>
-                    <p class="card-text text-muted">{{ course.course_code }}</p>
-                    <div class="mt-auto">
-                        <a href="{% url 'generate_qr_code' course.id %}" class="btn btn-primary">Generate QR</a>
-                        <a href="{% url 'view_report' course.id %}" class="btn btn-secondary">View Report</a>
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            {% for course in courses %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 text-center shadow-sm">
+                    <h1 class="gradient-text text-center my-5">My Courses</h1>
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ course.name }}</h5>
+                        <p class="card-text text-muted">{{ course.course_code }}</p>
+                        {% if course.teacher.subjects %}
+                        <p class="card-text text-muted">Subjects: {{ course.teacher.subjects }}</p>
+                        {% endif %}
+                        <div class="mt-auto">
+                            <div class="d-flex justify-content-center" style="gap: 1rem;">
+                                <a href="{% url 'generate_qr_code' course.id %}" class="btn btn-primary">Generate QR</a>
+                                <a href="{% url 'view_report' course.id %}" class="btn btn-secondary">View Report</a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        {% empty %}
-        <div class="col-auto">
-            <div class="card">
-                <div class="card-body">
-                    <p class="card-text">You haven't created any courses yet.</p>
+            {% empty %}
+            <div class="col-auto">
+                <div class="card">
+                    <div class="card-body">
+                        <p class="card-text">You haven't created any courses yet.</p>
+                    </div>
                 </div>
             </div>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
-</div>
 {% endblock %}

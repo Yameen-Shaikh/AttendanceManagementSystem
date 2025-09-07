@@ -5,6 +5,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 class CustomUser(AbstractUser):
+    username = None
     ROLE_CHOICES = (
         ('Admin', 'Admin'),
         ('Teacher', 'Teacher'),
@@ -13,9 +14,10 @@ class CustomUser(AbstractUser):
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    subjects = models.TextField(blank=True, null=True)
 
-    USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['name', 'email']
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['name']
 
     def __str__(self):
         return self.username

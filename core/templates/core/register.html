@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<div class="card login-card">
+    <h1 class="gradient-text">Register</h1>
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" name="name" id="name" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" name="email" id="email" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" name="password" id="password" required>
+        </div>
+        <div class="form-group">
+            <label for="role">Role</label>
+            <select name="role" id="role" class="form-control">
+                <option value="Student">Student</option>
+                <option value="Teacher">Teacher</option>
+            </select>
+        </div>
+        <div class="form-group" id="subjects-group" style="display: none;">
+            <label for="subjects">Subjects</label>
+            <input type="text" name="subjects" id="subjects" class="form-control" placeholder="Enter comma-separated subjects">
+        </div>
+        <button type="submit" class="btn-primary">Register</button>
+    </form>
+</div>
+
+<script>
+    document.getElementById('role').addEventListener('change', function () {
+        var subjectsGroup = document.getElementById('subjects-group');
+        if (this.value === 'Teacher') {
+            subjectsGroup.style.display = 'block';
+        } else {
+            subjectsGroup.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}

@@ -9,7 +9,9 @@ body {
 }
 
 .container {
-    background: #F4F7FB;
+    background-image: url("../images/bg1.jpeg");
+    background-size:cover;
+    background-repeat: no-repeat;
     padding: 40px;
     border-radius: 20px;
     box-shadow: -5px -5px 10px rgba(255, 255, 255, 0.7), 5px 5px 10px rgba(0, 0, 0, 0.1);
@@ -76,7 +78,9 @@ label {
 }
 
 input[type="email"],
-input[type="password"] {
+input[type="text"],
+input[type="password"],
+.form-control {
     width: 100%;
     padding: 10px;
     border-radius: 10px;
@@ -187,7 +191,7 @@ input[type="password"] {
 }
 
 .card {
-    background: #F4F7FB;
+    background:#fff6e7;
     padding: 25px;
     border-radius: 20px;
     box-shadow: -5px -5px 10px rgba(255, 255, 255, 0.7), 5px 5px 10px rgba(0, 0, 0, 0.1);
@@ -196,3 +200,6 @@ input[type="password"] {
     border: none;
 }
 
+.login-card {
+    width: 400px;
+}
