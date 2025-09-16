@@ -2,11 +2,12 @@
 
 {% block title %}My Profile{% endblock %}
 
-{% block content %}
-    <div class="card" style="width: 25rem;">
+{% block content_wrapper %}
+<div class="main-content mt-4">
+    {% block content %}
+    <div class="card" style="width: 25rem; margin: auto;">
         <div class="card-body">
             <h1 class="gradient-text text-center mb-4">My Profile</h1>
-            <p><strong>Username:</strong> {{ user.username }}</p>
             <p><strong>Email:</strong> {{ user.email }}</p>
             <p><strong>Name:</strong> {{ user.name }}</p>
             <p><strong>Role:</strong> {{ user.role }}</p>
@@ -19,4 +20,6 @@
             </div>
         </div>
     </div>
+    {% endblock %}
+</div>
 {% endblock %}

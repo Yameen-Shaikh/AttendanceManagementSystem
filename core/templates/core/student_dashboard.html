@@ -2,7 +2,9 @@
 
 {% block title %}My Dashboard{% endblock %}
 
-{% block content %}
+{% block content_wrapper %}
+<div class="main-content mt-4">
+    {% block content %}
 <style>
     .progress-bar {
         background-color: #e9ecef;
@@ -32,4 +34,6 @@
 
 <a href="{% url 'scan_qr_code' %}" class="btn btn-primary">Mark Today's Attendance</a>
 
+{% endblock %}
+</div>
 {% endblock %}

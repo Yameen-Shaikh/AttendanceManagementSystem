@@ -2,7 +2,9 @@
 
 {% block title %}Generate QR Code{% endblock %}
 
-{% block content %}
+{% block content_wrapper %}
+<div class="main-content mt-4">
+    {% block content %}
 <div class="card login-card">
     <div id="qrcode-container">
         <h4 class="text-center">{{ course.name }}</h4>
@@ -51,4 +53,6 @@
     var timerId = setInterval(countdown, 1000);
     countdown(); // initial call
 </script>
+{% endblock %}
+</div>
 {% endblock %}

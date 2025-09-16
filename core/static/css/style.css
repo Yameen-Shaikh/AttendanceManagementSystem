@@ -1,21 +1,22 @@
 body {
-    background-color: #F4F7FB;
     font-family: 'Poppins', sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
     margin: 0;
+    background-image: url("../images/bg1.jpeg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
 }
 
 .container {
-    background-image: url("../images/bg1.jpeg");
-    background-size:cover;
-    background-repeat: no-repeat;
     padding: 40px;
     border-radius: 20px;
     box-shadow: -5px -5px 10px rgba(255, 255, 255, 0.7), 5px 5px 10px rgba(0, 0, 0, 0.1);
     text-align: center;
+    background-color: rgba(255, 255, 255, 0.8);
 }
 
 h1 {

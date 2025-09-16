@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'base_anonymous.html' %}
 
 {% block title %}Register{% endblock %}
 
@@ -40,6 +40,9 @@
         </div>
         <button type="submit" class="btn-primary">Register</button>
     </form>
+    <p class="text-center mt-3">
+        Already have an account? <a href="{% url 'login' %}">Login</a>
+    </p>
 </div>
 
 <script>
