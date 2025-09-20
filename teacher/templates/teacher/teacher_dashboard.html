@@ -7,7 +7,7 @@
 <div class="main-content mt-4">
     {% block content %}
     <div class="container-fluid">
-        <h1 class="gradient-text text-center my-4">Welcome, {{ request.user.name }}!</h1>
+        
 
         {% if messages %}
             <ul class="messages">
@@ -17,24 +17,51 @@
             </ul>
         {% endif %}
 
+        <h2 class="text-center my-4">My Courses & Classes</h2>
+
         <div class="row mb-4">
             <div class="col-12 text-center">
-                <a href="{% url 'create_course' %}" class="btn btn-success btn-lg">Create New Course</a>
-            </div>
-        </div>
+                <a href="{% url 'teacher:create_course' %}" class="btn btn-success btn-lg me-2">Create New Course</a>
+                
+                <div class="dropdown d-inline-block me-2">
+                    <button class="btn btn-warning btn-lg dropdown-toggle" type="button" id="updateCourseDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        Update Course
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="updateCourseDropdown">
+                        {% for course in courses_with_classes.keys %}
+                            <li><a class="dropdown-item" href="{% url 'teacher:update_course' course.id %}">{{ course.name }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
 
-        <h2 class="text-center my-4">My Courses & Classes</h2>
+                <div class="dropdown d-inline-block">
+                    <button class="btn btn-danger btn-lg dropdown-toggle" type="button" id="deleteCourseDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        Delete Course
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="deleteCourseDropdown">
+                        {% for course in courses_with_classes.keys %}
+                            <li>
+                                <form action="{% url 'teacher:delete_course' course.id %}" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete {{ course.name }}?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item">{{ course.name }}</button>
+                                </form>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div> 
         <div class="row justify-content-center">
             {% if courses_with_classes %}
                 {% for course, classes in courses_with_classes.items %}
-                <div class="col-md-10 mb-4">
+                <div class="course-card-item">
                     <div class="card shadow-sm">
-                        <div class="card-header">
+                        <div class="card-header d-flex justify-content-between align-items-center">
                             <h4 class="mb-0">{{ course.name }}</h4>
                         </div>
                         <div class="card-body">
-                            <div class="d-flex justify-content-end mb-3">
-                                <a href="{% url 'create_class' course.id %}" class="btn btn-info btn-sm">Add Class to {{ course.name }}</a>
+                            <div class="d-flex justify-content-center mb-3">
+                                <a href="{% url 'teacher:create_class' course.id %}" class="btn btn-info btn-sm">Add Class to {{ course.name }}</a>
                             </div>
                             {% if classes %}
                             <ul class="list-group list-group-flush">
@@ -42,8 +69,22 @@
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <span>{{ class_obj.name }}</span>
                                     <div>
-                                        <a href="{% url 'generate_qr_code' class_obj.id %}" class="btn btn-primary btn-sm me-2">Generate QR</a>
-                                        <a href="{% url 'view_report' class_obj.id %}" class="btn btn-secondary btn-sm">View Report</a>
+                                        <a href="{% url 'teacher:generate_qr_code' class_obj.id %}" class="btn btn-primary btn-sm me-2">Generate QR</a>
+                                        <a href="{% url 'teacher:view_report' class_obj.id %}" class="btn btn-secondary btn-sm me-2">View Report</a>
+                                        <div class="dropdown d-inline-block">
+                                            <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton{{ class_obj.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Actions
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton{{ class_obj.id }}">
+                                                <li><a class="dropdown-item" href="{% url 'teacher:update_class' class_obj.id %}">Update Class</a></li>
+                                                <li>
+                                                    <form action="{% url 'teacher:delete_class' class_obj.id %}" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this class?');">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="dropdown-item">Delete Class</button>
+                                                    </form>
+                                                </li>
+                                            </ul>
+                                        </div>
                                     </div>
                                 </li>
                                 {% endfor %}

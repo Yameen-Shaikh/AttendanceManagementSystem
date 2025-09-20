@@ -1,5 +1,8 @@
+import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -23,7 +26,7 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 class CustomUser(AbstractUser):
-    username = None
+    username = None # Removed username field
     ROLE_CHOICES = (
         ('Admin', 'Admin'),
         ('Teacher', 'Teacher'),
@@ -32,52 +35,40 @@ class CustomUser(AbstractUser):
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
-    subjects = models.TextField(blank=True, null=True)
+    subjects = models.TextField(blank=True, null=True) # Added subjects field
 
     objects = CustomUserManager()
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['name']
+    USERNAME_FIELD = 'email' # Changed to email
+    REQUIRED_FIELDS = ['name'] # Updated required fields
 
     def __str__(self):
-        return self.email
-
-import uuid
-from django.conf import settings
+        return self.email # Changed to email
 
 class Course(models.Model):
     name = models.CharField(max_length=255)
+    course_code = models.TextField(unique=True)
+    teacher = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='courses_taught', limit_choices_to={'role': 'Teacher'})
+    students = models.ManyToManyField(CustomUser, related_name='enrolled_courses', limit_choices_to={'role': 'Student'})
 
     def __str__(self):
         return self.name
 
-class Class(models.Model):
-    name = models.CharField(max_length=255) # e.g., "First Year"
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='classes')
-    teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='classes_taught', limit_choices_to={'role': 'Teacher'})
-    students = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='enrolled_classes', limit_choices_to={'role': 'Student'})
-
-    class Meta:
-        verbose_name_plural = "Classes" # Fixes admin display name
-
-    def __str__(self):
-        return f"{self.course.name} - {self.name}"
-
 class Attendance(models.Model):
-    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    class_field = models.ForeignKey(Class, on_delete=models.CASCADE, null=True, blank=True)
+    student = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
     lecture_date = models.DateField()
     timestamp = models.DateTimeField(auto_now_add=True)
     is_present = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.student.name} - {self.class_field.name} ({self.class_field.course.name}) - {self.lecture_date}"
+        return f"{self.student.name} - {self.course.name} - {self.lecture_date}"
 
 class QRCode(models.Model):
-    class_field = models.ForeignKey(Class, on_delete=models.CASCADE, null=True, blank=True)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
     qr_code_data = models.UUIDField(default=uuid.uuid4, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
 
     def __str__(self):
-        return f"QRCode for {self.class_field.name} ({self.class_field.course.name})"
+        return f"QRCode for {self.course.name}"

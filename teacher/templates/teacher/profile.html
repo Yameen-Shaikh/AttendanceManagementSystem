@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block content_wrapper %}
+<div class="main-content mt-4">
+    {% block content %}
+    <div class="card" style="width: 25rem; margin: auto;">
+        <div class="card-body">
+            <h1 class="gradient-text text-center mb-4">My Profile</h1>
+            <p><strong>Email:</strong> {{ user.email }}</p>
+            <p><strong>Name:</strong> {{ user.name }}</p>
+            <p><strong>Role:</strong> {{ user.role }}</p>
+            <div class="text-center mt-4">
+                {% if user.role == 'Teacher' %}
+                    <a href="{% url 'teacher:teacher_dashboard' %}" class="btn btn-primary">Back to Dashboard</a>
+                {% else %}
+                    <a href="{% url 'student:student_dashboard' %}" class="btn btn-primary">Back to Dashboard</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+</div>
+{% endblock %}

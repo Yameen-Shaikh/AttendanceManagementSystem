@@ -8,9 +8,8 @@
 <div class="card login-card">
     <div id="qrcode-container">
         <h4 class="text-center">{{ course.name }}</h4>
-        {% if subjects %}
-        <p class="text-center text-muted">Subjects: {{ subjects }}</p>
-        {% endif %}
+        <p class="text-center text-muted">Class: {{ class_name }}</p>
+        <p class="text-center text-muted">Subject: {{ subject }}</p>
         <div id="qrcode-display" class="d-flex justify-content-center mt-3"></div>
         <div id="timer" class="mt-3 text-center"></div>
     </div>

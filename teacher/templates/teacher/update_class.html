@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Create New Class{% endblock %}
+{% block title %}Update Class{% endblock %}
 
 {% block content_wrapper %}
-<div class="main-content mt-4"> {# Removed container class #}
+<div class="main-content mt-4">
     {% block content %}
     <div class="card login-card">
-        <h1 class="gradient-text">Create New Class for {{ course.name }}</h1>
+        <h1 class="gradient-text">Update Class: {{ class_obj.name }}</h1>
         {% if messages %}
             <ul class="messages">
                 {% for message in messages %}
@@ -19,16 +19,16 @@
             {% csrf_token %}
             <div class="form-group">
                 <label for="name">Class Name</label>
-                <input type="text" name="name" id="name" required placeholder="e.g., First year, second year etc...">
+                <input type="text" name="name" id="name" value="{{ class_obj.name }}" required>
             </div>
             <div class="form-group">
                 <label for="subject">Subject</label>
-            <input type="text" name="subject" id="subject" required placeholder="e.g., Python, Java">
+                <input type="text" name="subject" id="subject" value="{{ class_obj.subject }}" required>
             </div>
-            <button type="submit" class="btn-primary">Create Class</button>
+            <button type="submit" class="btn-primary">Update Class</button>
         </form>
         <p class="text-center mt-3">
-            <a href="{% url 'teacher:teacher_dashboard' %}">Back to Dashboard</a>
+            <a href="{% url 'teacher:teacher_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
         </p>
     </div>
     {% endblock %}

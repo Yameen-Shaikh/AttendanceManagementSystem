@@ -17,13 +17,11 @@ def teacher_dashboard(request):
     if request.user.role != 'Teacher':
         raise PermissionDenied
     
-    classes_taught = Class.objects.filter(teacher=request.user).order_by('course__name', 'name')
-
+    courses = Course.objects.filter(teacher=request.user)
     courses_with_classes = {}
-    for class_obj in classes_taught:
-        if class_obj.course not in courses_with_classes:
-            courses_with_classes[class_obj.course] = []
-        courses_with_classes[class_obj.course].append(class_obj)
+    for course in courses:
+        classes = Class.objects.filter(course=course)
+        courses_with_classes[course] = list(classes)
 
     context = {
         'courses_with_classes': courses_with_classes,
@@ -39,7 +37,7 @@ def create_course_view(request):
     if request.method == 'POST':
         course_name = request.POST.get('name')
         if course_name:
-            Course.objects.create(name=course_name)
+            Course.objects.create(name=course_name, teacher=request.user)
             messages.success(request, f'Course "{course_name}" created successfully.')
             return redirect('teacher:teacher_dashboard')
         else:
@@ -56,11 +54,12 @@ def create_class_view(request, course_id):
 
     if request.method == 'POST':
         class_name = request.POST.get('name')
+        subject = request.POST.get('subject') # Get subject from form
         if class_name:
             if Class.objects.filter(course=course, name=class_name).exists():
                 messages.error(request, f'A class named "{class_name}" already exists for this course.')
             else:
-                Class.objects.create(name=class_name, course=course, teacher=request.user)
+                Class.objects.create(name=class_name, course=course, teacher=request.user, subject=subject) # Save subject
                 messages.success(request, f'Class "{class_name}" created successfully for {course.name}.')
                 return redirect('teacher:teacher_dashboard')
         else:
@@ -78,15 +77,27 @@ def generate_qr_code(request, class_id):
     if request.user.role != 'Teacher' or request.user != class_obj.teacher:
         return HttpResponseForbidden("You are not authorized to generate a QR code for this class.")
 
-    expires_at = timezone.now() + timedelta(minutes=5)
-    qr_code = QRCode.objects.create(class_field=class_obj, expires_at=expires_at)
+    # Check for an existing active QR code for this class
+    # Filter by class_field and check if expires_at is in the future
+    active_qr_code = QRCode.objects.filter(
+        class_field=class_obj,
+        expires_at__gt=timezone.now()
+    ).first()
+
+    if active_qr_code:
+        qr_code = active_qr_code
+    else:
+        # If no active QR code, create a new one
+        expires_at = timezone.now() + timedelta(minutes=2) # Changed to 2 minutes
+        qr_code = QRCode.objects.create(class_field=class_obj, expires_at=expires_at)
     
     context = {
         'course': class_obj.course,
         'class_obj': class_obj,
         'qr_code_data': str(qr_code.qr_code_data),
-        'subjects': class_obj.teacher.subjects,
-        'expires_at': expires_at.isoformat(),
+        'expires_at': qr_code.expires_at.isoformat(), # Use the actual expires_at from the QR code object
+        'class_name': class_obj.name,
+        'subject': class_obj.subject,
     }
     return render(request, 'teacher/generate_qr.html', context)
 
@@ -130,7 +141,6 @@ def teacher_register_view(request):
         name = request.POST.get('name')
         email = request.POST.get('email')
         password = request.POST.get('password')
-        subjects = request.POST.get('subjects', '')
 
         if CustomUser.objects.filter(email=email).exists():
             messages.error(request, 'Email already exists.')
@@ -142,10 +152,70 @@ def teacher_register_view(request):
             password=make_password(password),
             role='Teacher',
             is_active=False, # Teachers need approval
-            subjects=subjects
         )
         
         messages.success(request, 'Registration successful. Your account is pending approval from an administrator.')
         return redirect('login')
 
     return render(request, 'teacher/register.html')
+
+@login_required
+def profile(request):
+    return render(request, 'teacher/profile.html')
+
+@login_required
+def update_course_view(request, course_id):
+    course = get_object_or_404(Course, pk=course_id, teacher=request.user)
+    if request.user.role != 'Teacher':
+        raise PermissionDenied
+
+    if request.method == 'POST':
+        course.name = request.POST.get('name')
+        course.save()
+        messages.success(request, 'Course updated successfully.')
+        return redirect('teacher:teacher_dashboard')
+    
+    context = {
+        'course': course
+    }
+    return render(request, 'teacher/update_course.html', context)
+
+@login_required
+@require_POST
+def delete_course_view(request, course_id):
+    course = get_object_or_404(Course, pk=course_id, teacher=request.user)
+    if request.user.role != 'Teacher':
+        raise PermissionDenied
+    
+    course.delete()
+    messages.success(request, 'Course deleted successfully.')
+    return redirect('teacher:teacher_dashboard')
+
+@login_required
+def update_class_view(request, class_id):
+    class_obj = get_object_or_404(Class, pk=class_id, teacher=request.user)
+    if request.user.role != 'Teacher':
+        raise PermissionDenied
+
+    if request.method == 'POST':
+        class_obj.name = request.POST.get('name')
+        class_obj.subject = request.POST.get('subject')
+        class_obj.save()
+        messages.success(request, 'Class updated successfully.')
+        return redirect('teacher:teacher_dashboard')
+    
+    context = {
+        'class_obj': class_obj
+    }
+    return render(request, 'teacher/update_class.html', context)
+
+@login_required
+@require_POST
+def delete_class_view(request, class_id):
+    class_obj = get_object_or_404(Class, pk=class_id, teacher=request.user)
+    if request.user.role != 'Teacher':
+        raise PermissionDenied
+    
+    class_obj.delete()
+    messages.success(request, 'Class deleted successfully.')
+    return redirect('teacher:teacher_dashboard')
