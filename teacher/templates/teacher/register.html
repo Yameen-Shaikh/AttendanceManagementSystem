@@ -1,10 +1,10 @@
 {% extends 'base_anonymous.html' %}
 
-{% block title %}Login{% endblock %}
+{% block title %}Teacher Registration{% endblock %}
 
 {% block content %}
 <div class="card login-card">
-    <h1 class="gradient-text">Login</h1>
+    <h1 class="gradient-text">Teacher Registration</h1>
     {% if messages %}
         <ul class="messages">
             {% for message in messages %}
@@ -12,8 +12,13 @@
             {% endfor %}
         </ul>
     {% endif %}
-    <form method="post">
+    <form method="post" action="{% url 'teacher:register' %}">
         {% csrf_token %}
+        <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" name="name" id="name" required>
+        </div>
+        
         <div class="form-group">
             <label for="email">Email</label>
             <input type="email" name="email" id="email" required>
@@ -22,10 +27,14 @@
             <label for="password">Password</label>
             <input type="password" name="password" id="password" required>
         </div>
-        <button type="submit" class="btn-primary">Log In</button>
+        <div class="form-group">
+            <label for="subjects">Subjects</label>
+            <input type="text" name="subjects" id="subjects" class="form-control" placeholder="Enter comma-separated subjects">
+        </div>
+        <button type="submit" class="btn-primary">Register</button>
     </form>
     <p class="text-center mt-3">
-        Don't have an account? <a href="{% url 'register' %}">Register</a>
+        Already have an account? <a href="{% url 'login' %}">Login</a>
     </p>
 </div>
 {% endblock %}

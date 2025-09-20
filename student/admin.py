@@ -1,9 +1,10 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, Course, Attendance, QRCode
+from .models import CustomUser
 
 class CustomUserAdmin(UserAdmin):
-    list_display = ('email', 'name', 'role', 'is_staff')
+    list_display = ('email', 'name', 'role', 'is_active', 'is_staff')
+    list_filter = ('role', 'is_active')
     fieldsets = (
         (None, {'fields': ('password',)}),
         ('Personal info', {'fields': ('name', 'email', 'role')}),
@@ -11,11 +12,6 @@ class CustomUserAdmin(UserAdmin):
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
     ordering = ('email',)
-
-class CourseAdmin(admin.ModelAdmin):
-    list_display = ('name', 'course_code', 'teacher')
+    search_fields = ('email', 'name')
 
 admin.site.register(CustomUser, CustomUserAdmin)
-admin.site.register(Course, CourseAdmin)
-admin.site.register(Attendance)
-admin.site.register(QRCode)

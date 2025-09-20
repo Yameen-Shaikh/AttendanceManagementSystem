@@ -1,10 +1,10 @@
 {% extends 'base_anonymous.html' %}
 
-{% block title %}Register{% endblock %}
+{% block title %}Student Registration{% endblock %}
 
 {% block content %}
 <div class="card login-card">
-    <h1 class="gradient-text">Register</h1>
+    <h1 class="gradient-text">Student Registration</h1>
     {% if messages %}
         <ul class="messages">
             {% for message in messages %}
@@ -12,7 +12,7 @@
             {% endfor %}
         </ul>
     {% endif %}
-    <form method="post">
+    <form method="post" action="{% url 'student:register' %}">
         {% csrf_token %}
         <div class="form-group">
             <label for="name">Name</label>
@@ -28,15 +28,12 @@
             <input type="password" name="password" id="password" required>
         </div>
         <div class="form-group">
-            <label for="role">Role</label>
-            <select name="role" id="role" class="form-control">
-                <option value="Student">Student</option>
-                <option value="Teacher">Teacher</option>
+            <label for="class_id">Class</label>
+            <select name="class_id" id="class_id" class="form-control">
+                {% for class_obj in classes %}
+                    <option value="{{ class_obj.id }}">{{ class_obj.course.name }} - {{ class_obj.name }}</option>
+                {% endfor %}
             </select>
-        </div>
-        <div class="form-group" id="subjects-group" style="display: none;">
-            <label for="subjects">Subjects</label>
-            <input type="text" name="subjects" id="subjects" class="form-control" placeholder="Enter comma-separated subjects">
         </div>
         <button type="submit" class="btn-primary">Register</button>
     </form>
@@ -44,15 +41,4 @@
         Already have an account? <a href="{% url 'login' %}">Login</a>
     </p>
 </div>
-
-<script>
-    document.getElementById('role').addEventListener('change', function () {
-        var subjectsGroup = document.getElementById('subjects-group');
-        if (this.value === 'Teacher') {
-            subjectsGroup.style.display = 'block';
-        } else {
-            subjectsGroup.style.display = 'none';
-        }
-    });
-</script>
 {% endblock %}

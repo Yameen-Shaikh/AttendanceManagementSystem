@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.core.mail import send_mail
 from django.utils import timezone
-from core.models import Course, Attendance, CustomUser
+from student.models import Course, Attendance, CustomUser
 
 class Command(BaseCommand):
     help = 'Sends email notifications to students marked absent or present.'
