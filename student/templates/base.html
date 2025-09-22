@@ -10,14 +10,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-    <style>
-        body {
-            padding-top: 56px;
-        }
-    </style>
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light fixed-top" style="background-color: #F4F7FB; box-shadow: -5px -5px 10px rgba(255, 255, 255, 0.7), 5px 5px 10px rgba(0, 0, 0, 0.1);">
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
         <div class="container-fluid">
             <a class="navbar-brand gradient-text" href="/">AMS</a>
             <!-- Welcome text centered -->

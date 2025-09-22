@@ -1,74 +1,33 @@
-import uuid
-from django.db import models
-from django.contrib.auth.models import AbstractUser, BaseUserManager
-from django.db.models.signals import post_save
-from django.dispatch import receiver
+# Project Changes
 
-class CustomUserManager(BaseUserManager):
-    def create_user(self, email, password=None, **extra_fields):
-        if not email:
-            raise ValueError('The Email field must be set')
-        email = self.normalize_email(email)
-        user = self.model(email=email, **extra_fields)
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
+This document summarizes the recent changes made to the project.
 
-    def create_superuser(self, email, password=None, **extra_fields):
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
+## 1. Static Files Consolidation
 
-        if extra_fields.get('is_staff') is not True:
-            raise ValueError('Superuser must have is_staff=True.')
-        if extra_fields.get('is_superuser') is not True:
-            raise ValueError('Superuser must have is_superuser=True.')
+-   **Merged CSS files:** The contents of `student/static/css/style.css` and `staticfiles/css/style.css` were merged into a single file located at `static/css/style.css`.
+-   **Renamed `staticfiles` to `static`:** The `staticfiles` directory was renamed to `static` to adhere to Django's best practices for development static files.
+-   **Removed `student/static` directory:** The `student/static` directory was removed to eliminate duplicate static files.
 
-        return self.create_user(email, password, **extra_fields)
+## 2. Django Settings Update
 
-class CustomUser(AbstractUser):
-    username = None # Removed username field
-    ROLE_CHOICES = (
-        ('Admin', 'Admin'),
-        ('Teacher', 'Teacher'),
-        ('Student', 'Student'),
-    )
-    name = models.CharField(max_length=255)
-    email = models.EmailField(unique=True)
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
-    subjects = models.TextField(blank=True, null=True) # Added subjects field
+-   **`settings.py` was updated to correctly handle static files:**
+    -   `STATICFILES_DIRS` is now set to `[BASE_DIR / 'static']` to tell Django where to find static files during development.
+    -   `STATIC_ROOT` is set to `BASE_DIR / 'staticfiles'` which is used to collect all static files for production using the `collectstatic` command.
 
-    objects = CustomUserManager()
+## 3. Template Cleanup
 
-    USERNAME_FIELD = 'email' # Changed to email
-    REQUIRED_FIELDS = ['name'] # Updated required fields
+-   **Removed inline styles:** Inline `<style>` blocks and `style` attributes were removed from `student/templates/base.html`.
+-   **Moved styles to CSS file:** The removed styles were moved to the main stylesheet at `static/css/style.css`.
+-   **Added `extra_css` block:** A `{% block extra_css %}` was added to the `<head>` of `base.html` to allow for template-specific CSS.
 
-    def __str__(self):
-        return self.email # Changed to email
+## 4. URL Configuration Cleanup
 
-class Course(models.Model):
-    name = models.CharField(max_length=255)
-    course_code = models.TextField(unique=True)
-    teacher = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='courses_taught', limit_choices_to={'role': 'Teacher'})
-    students = models.ManyToManyField(CustomUser, related_name='enrolled_courses', limit_choices_to={'role': 'Student'})
+-   **Added docstrings:** Docstrings were added to `ams/urls.py`, `student/urls.py`, and `teacher/urls.py` to improve code documentation.
+-   **Formatted code:** The code in the `urls.py` files was formatted for better readability.
 
-    def __str__(self):
-        return self.name
+## 5. `README.md` Creation
 
-class Attendance(models.Model):
-    student = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    course = models.ForeignKey(Course, on_delete=models.CASCADE)
-    lecture_date = models.DateField()
-    timestamp = models.DateTimeField(auto_now_add=True)
-    is_present = models.BooleanField(default=False)
-
-    def __str__(self):
-        return f"{self.student.name} - {self.course.name} - {self.lecture_date}"
-
-class QRCode(models.Model):
-    course = models.ForeignKey(Course, on_delete=models.CASCADE)
-    qr_code_data = models.UUIDField(default=uuid.uuid4, unique=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    expires_at = models.DateTimeField()
-
-    def __str__(self):
-        return f"QRCode for {self.course.name}"
+-   A `README.md` file was created to provide comprehensive information about the project, including:
+    -   Project structure
+    -   Setup instructions for a new developer
+    -   Usage guidelines
