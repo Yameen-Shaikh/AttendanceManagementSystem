@@ -142,21 +142,20 @@ input[type="password"],
 }
 
 .navbar {
-    background: #F4F7FB;
-    padding: 15px 0;
-    box-shadow: -5px -5px 10px rgba(255, 255, 255, 0.7), 5px 5px 10px rgba(0, 0, 0, 0.1);
-    margin-bottom: 30px;
-    background-color: #F4F7FB;
-    box-shadow: -5px -5px 10px rgba(255, 255, 255, 0.7), 5px 5px 10px rgba(0, 0, 0, 0.1);
+    background: #fff;
+    border-radius: 25px;
+    margin: 20px auto;
+    width: 95%;
+    max-width: 1200px;
+    padding: 10px 20px;
+    border: 2px solid #000;
 }
 
 .navbar .container {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    max-width: 960px;
-    margin: 0 auto;
-    padding: 0 20px;
+    width: 100%;
 }
 
 .navbar-brand {
@@ -170,21 +169,25 @@ input[type="password"],
     margin: 0;
     padding: 0;
     display: flex;
+    align-items: center;
 }
 
 .nav-item {
-    margin-left: 20px;
+    margin-left: 10px;
 }
 
 .nav-link {
     text-decoration: none;
-    color: #555;
+    color: #000;
     font-weight: 500;
-    transition: color 0.3s ease;
+    padding: 10px 20px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
 }
 
 .nav-link:hover {
-    color: #8A2BE2;
+    background-color: #f0f0f0;
+    color: #000;
 }
 
 .main-content {
@@ -198,7 +201,7 @@ input[type="password"],
     background:#fff6e7;
     padding: 25px;
     border-radius: 20px;
-    box-shadow: -5px -5px 10px rgba(255, 255, 255, 0.7), 5px 5px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 15px rgba(237, 159, 98);
     text-align: center;
     width: 100%; /* Changed from 400px to be responsive */
     border: none;
@@ -206,6 +209,7 @@ input[type="password"],
 
 .login-card {
     width: 400px;
+    box-shadow: 0 0 15px rgba(237, 159, 98);
 }
 
 .dashboard-grid {

@@ -31,3 +31,9 @@ This document summarizes the recent changes made to the project.
     -   Project structure
     -   Setup instructions for a new developer
     -   Usage guidelines
+
+## 6. UI Enhancements
+
+-   **Navbar Styling:** The navbar now has a white background, black text, rounded corners, and a subtle box shadow for a clean and modern look.
+-   **Glowing Effect:** A glowing effect using the color `#cdd2bf` has been applied to the navbar and all card elements (`.card`, `.login-card`, `.dashboard-card`).
+-   **Button Styling:** All buttons in the application now use a gradient style (`.btn-grad`) with a glowing effect on hover.
