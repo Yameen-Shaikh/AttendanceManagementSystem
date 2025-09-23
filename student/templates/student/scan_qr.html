@@ -16,14 +16,15 @@
         function onScanSuccess(decodedText, decodedResult) {
             console.log(`Code matched = ${decodedText}`, decodedResult);
             // Send the QR code data to the server
-            fetch("{% url 'mark_attendance' %}", {
+            fetch("{% url 'student:mark_attendance' %}", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': '{{ csrf_token }}'
                 },
                 body: JSON.stringify({
-                    'qr_code_data': decodedText
+                    'qr_code_data': decodedText,
+                    'class_id': {{ class_obj.id }}
                 })
             })
             .then(response => response.json())

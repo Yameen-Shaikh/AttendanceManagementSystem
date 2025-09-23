@@ -43,9 +43,7 @@
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'student:student_dashboard' %}">Student Dashboard</a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'student:scan_qr_code' %}">Mark Attendance</a>
-                            </li>
+                            
                         {% endif %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'logout' %}" onclick="return confirm('Are you sure you want to logout?');">Logout</a>

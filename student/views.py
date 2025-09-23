@@ -18,14 +18,18 @@ def mark_attendance(request):
     try:
         data = json.loads(request.body)
         qr_code_data = data.get('qr_code_data')
+        class_id = data.get('class_id')
 
-        if not qr_code_data:
-            return JsonResponse({'success': False, 'message': 'QR code data not provided.'})
+        if not qr_code_data or not class_id:
+            return JsonResponse({'success': False, 'message': 'QR code data or class ID not provided.'})
 
         try:
             qr_code = QRCode.objects.get(qr_code_data=qr_code_data)
         except QRCode.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Invalid QR code.'})
+
+        if qr_code.class_field.id != class_id:
+            return JsonResponse({'success': False, 'message': 'QR code does not match the selected class.'})
 
         if timezone.now() > qr_code.expires_at:
             return JsonResponse({'success': False, 'message': 'QR code has expired.'})
@@ -94,8 +98,9 @@ def student_dashboard(request):
     return render(request, 'student/student_dashboard.html', {'enrollments': enrollments})
 
 @login_required
-def scan_qr_code(request):
-    return render(request, 'student/scan_qr.html')
+def scan_qr_code(request, class_id):
+    class_obj = get_object_or_404(Class, id=class_id)
+    return render(request, 'student/scan_qr.html', {'class_obj': class_obj})
 
 @login_required
 def profile(request):

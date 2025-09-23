@@ -13,9 +13,9 @@
             <p><strong>Role:</strong> {{ user.role }}</p>
             <div class="text-center mt-4">
                 {% if user.role == 'Teacher' %}
-                    <a href="{% url 'teacher_dashboard' %}" class="btn btn-primary">Back to Dashboard</a>
+                    <a href="{% url 'teacher:teacher_dashboard' %}" class="btn-grad">Back to Dashboard</a>
                 {% else %}
-                    <a href="{% url 'student_dashboard' %}" class="btn btn-primary">Back to Dashboard</a>
+                    <a href="{% url 'student:student_dashboard' %}" class="btn-grad">Back to Dashboard</a>
                 {% endif %}
             </div>
         </div>
