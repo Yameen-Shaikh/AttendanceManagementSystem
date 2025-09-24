@@ -151,7 +151,7 @@ input[type="password"],
     border: 2px solid #000;
 }
 
-.navbar .container {
+.navbar .container-fluid {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -209,7 +209,7 @@ input[type="password"],
 
 .login-card {
     width: 400px;
-    box-shadow: 0 0 15px rgba(237, 159, 98, 0.5);
+    box-shadow: 0 0 15px rgba(237, 159, 98,.5);
 }
 
 .dashboard-grid {
@@ -272,6 +272,7 @@ input[type="password"],
 .student-dashboard-content {
     display: flex;
     flex-direction: column;
+    width: 100%;
 }
 .student-dashboard-content .card {
     background: #fff6e7;
@@ -282,6 +283,7 @@ input[type="password"],
     width: 100%;
     max-width: 400px;
     border: none;
+    margin-bottom: 20px;
 }
 
 /* Define CSS classes for different percentage values */
@@ -290,3 +292,70 @@ input[type="password"],
 .progress-20 { width: 20%; }
 /* ... and so on up to 100% */
 .progress-100 { width: 100%; }
+
+/* Responsive Styles */
+@media (max-width: 991.98px) {
+    .welcome-text-container {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding-top: 70px;
+    }
+
+    .container {
+        padding: 20px;
+    }
+
+    .card, .login-card {
+        width: 90%;
+        margin: 0 auto 20px;
+    }
+
+    #qr-reader {
+        width: 90%;
+        margin: 0 auto 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    .card, .login-card {
+        padding: 15px;
+    }
+
+    .btn-grad {
+        padding: 12px 25px;
+        font-size: 0.8rem;
+    }
+
+    .form-group {
+        margin-bottom: 10px;
+    }
+}
+
+.offcanvas-start {
+    width: 250px;
+}
+
+.offcanvas-body .navbar-nav {
+    flex-direction: column;
+    width: 100%;
+}
+
+.offcanvas-body .nav-item {
+    width: 100%;
+    margin-left: 0;
+}
+
+.offcanvas-body .nav-link {
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+    border-radius: 0;
+    width: 100%;
+}
