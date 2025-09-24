@@ -32,11 +32,11 @@ body {
 }
 
 .main-content {
-    padding: 20px;
-    padding-bottom: 80px; /* For bottom navbar */
+    padding: 120px 20px 80px; /* top, horizontal, bottom */
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center; /* Vertically center content */
     min-height: 100vh;
 }
 
@@ -55,6 +55,22 @@ body {
     opacity: 0;
     transform: translateY(20px);
     margin-bottom: 20px;
+}
+
+body > .navbar {
+    background: var(--card-bg-color);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--card-border-color);
+    box-shadow: 0 10px 30px var(--shadow-color);
+}
+
+.offcanvas {
+    background: var(--card-bg-color);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--card-border-color);
+    box-shadow: 0 10px 30px var(--shadow-color);
 }
 
 @keyframes fadeInSlideUp {
@@ -94,6 +110,26 @@ p {
 .btn:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+.btn-grad {
+    background-image: linear-gradient(to right, #DA4453 0%, #89216B  51%, #DA4453  100%);
+    margin: 10px;
+    padding: 15px 45px;
+    text-align: center;
+    text-transform: uppercase;
+    transition: 0.5s;
+    background-size: 200% auto;
+    color: white;
+    box-shadow: 0 0 20px #eee;
+    border-radius: 10px;
+    display: block;
+}
+
+.btn-grad:hover {
+    background-position: right center; /* change the direction of the change here */
+    color: #fff;
+    text-decoration: none;
 }
 
 .form-group {
@@ -158,6 +194,14 @@ p {
 
 /* Responsive */
 @media (min-width: 768px) {
+    body > .navbar {
+        border-radius: 15px;
+        top: 20px;
+        left: 20px;
+        right: 20px;
+        width: auto;
+    }
+
     .bottom-nav {
         display: none; /* Hide on desktop */
     }

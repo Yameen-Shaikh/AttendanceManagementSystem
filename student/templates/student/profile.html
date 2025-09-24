@@ -1,11 +1,11 @@
-{% extends 'base.html' %}
+{% extends 'base_student.html' %}
 
 {% block title %}My Profile{% endblock %}
 
 {% block content_wrapper %}
 <div class="main-content mt-4">
     {% block content %}
-    <div class="card" style="width: 25rem; margin: auto;">
+    <div class="card">
         <div class="card-body">
             <h1 class="gradient-text text-center mb-4">My Profile</h1>
             <p><strong>Email:</strong> {{ user.email }}</p>

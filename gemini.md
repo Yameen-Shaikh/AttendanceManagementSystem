@@ -90,3 +90,17 @@ This document summarizes the recent changes made to the project.
     -   The `base_teacher.html` template was updated to load `teacher_style.css`.
 -   **Updated Django Settings for Static Files:**
     -   The `STATICFILES_DIRS` setting was removed from `settings.py` to allow Django's `AppDirectoriesFinder` to automatically discover the static files in each application's `static` directory. This is the recommended approach for managing app-specific static files.
+
+## 9. Student Application UI/UX Overhaul
+
+-   **New Base Template:** Created a new `base_student.html` template to serve as the foundation for the student-facing pages, enabling a distinct theme for the student application.
+-   **Template Inheritance Update:** Updated all relevant student templates to inherit from `base_student.html`, ensuring a consistent application of the new theme.
+-   **Template Cleanup:** Removed the unused `base.html` template from the `student` application to maintain a clean and organized codebase.
+-   **Video Background:** Implemented a video background in `base_student.html` to create a modern and engaging user experience.
+-   **Glass Effect Theme:**
+    -   **Navbar:** Styled the navbar with a "glass effect" (translucent with a blur) to match the overall theme. Made the navbar responsive, with rounded corners and margins on larger screens.
+    -   **Sidebar:** Applied the glass effect to the off-canvas sidebar for a consistent look and feel.
+-   **Improved Layout and Styling:**
+    -   **Centered Content:** Vertically centered the main content on all pages to improve the layout and visual balance.
+    -   **Button Styling:** Added a gradient button style (`.btn-grad`) for a more prominent and visually appealing call-to-action button.
+    -   **Card Spacing:** Removed inline styles from the profile card to ensure consistent and responsive spacing on all screen sizes.
