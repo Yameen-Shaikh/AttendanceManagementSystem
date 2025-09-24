@@ -76,3 +76,17 @@ This document summarizes the recent changes made to the project.
 -   **Solution:**
     -   Re-added the "Mark Today's Attendance" button to its correct position within the card in `student/templates/student/student_dashboard.html`.
     -   Reverted the `btn-grad` CSS styles in `static/css/style.css` to their original, full-featured state, restoring the intended gradient and glowing effects.
+
+## 8. Static Files and Theming Separation
+
+-   **Separated Student and Teacher Static Files:** To support different themes for the student and teacher applications, the static files were separated.
+    -   The original `static` directory was moved to `teacher/static`.
+    -   A new `student/static` directory was created for the student application's styles and assets.
+-   **Created a Teacher-Specific Base Template:**
+    -   A new `base_teacher.html` was created in `teacher/templates` to serve as the base template for all teacher-facing pages.
+    -   All teacher templates were updated to inherit from `base_teacher.html`.
+-   **Renamed Teacher's Stylesheet:**
+    -   The stylesheet for the teacher application was renamed to `teacher_style.css` to avoid naming conflicts with the student stylesheet.
+    -   The `base_teacher.html` template was updated to load `teacher_style.css`.
+-   **Updated Django Settings for Static Files:**
+    -   The `STATICFILES_DIRS` setting was removed from `settings.py` to allow Django's `AppDirectoriesFinder` to automatically discover the static files in each application's `static` directory. This is the recommended approach for managing app-specific static files.

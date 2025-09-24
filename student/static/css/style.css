@@ -1,0 +1,167 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+:root {
+    --primary-color: #8A2BE2;
+    --white-color: #ffffff;
+    --text-color: #f0f0f0;
+    --card-bg-color: rgba(255, 255, 255, 0.2);
+    --card-border-color: rgba(255, 255, 255, 0.3);
+    --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    overflow-x: hidden;
+    color: var(--white-color);
+}
+
+#bg-video {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    z-index: -1;
+    transform: translateX(-50%) translateY(-50%);
+    background-size: cover;
+    transition: transform 0.5s ease-out;
+}
+
+.main-content {
+    padding: 20px;
+    padding-bottom: 80px; /* For bottom navbar */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.card {
+    background: var(--card-bg-color);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 15px;
+    box-shadow: 0 10px 30px var(--shadow-color);
+    padding: 30px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    border: 1px solid var(--card-border-color);
+    animation: fadeInSlideUp 0.5s ease-out forwards;
+    opacity: 0;
+    transform: translateY(20px);
+    margin-bottom: 20px;
+}
+
+@keyframes fadeInSlideUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    color: var(--white-color);
+    text-shadow: 0 2px 4px var(--shadow-color);
+}
+
+p {
+    color: var(--text-color);
+}
+
+.btn {
+    background: var(--white-color);
+    color: var(--primary-color);
+    padding: 15px 30px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: block;
+    width: 100%;
+    margin-top: 20px;
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid var(--card-border-color);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--white-color);
+    font-weight: 500;
+}
+
+.form-group input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Bottom Navigation Bar */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: var(--card-bg-color);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid var(--card-border-color);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 1000;
+}
+
+.bottom-nav a {
+    color: var(--white-color);
+    text-decoration: none;
+    text-align: center;
+    font-size: 12px;
+    transition: color 0.3s ease;
+}
+
+.bottom-nav a i {
+    font-size: 20px;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.bottom-nav a:hover, .bottom-nav a.active {
+    color: var(--primary-color);
+}
+
+/* Responsive */
+@media (min-width: 768px) {
+    .bottom-nav {
+        display: none; /* Hide on desktop */
+    }
+    .main-content {
+        padding-bottom: 20px;
+    }
+}
