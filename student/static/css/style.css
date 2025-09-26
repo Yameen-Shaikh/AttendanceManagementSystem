@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
 :root {
@@ -15,20 +14,17 @@ body {
     margin: 0;
     overflow-x: hidden;
     color: var(--white-color);
+    background-color: #010b18;
 }
 
-#bg-video {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    min-width: 100%;
-    min-height: 100%;
-    width: auto;
-    height: auto;
-    z-index: -1;
-    transform: translateX(-50%) translateY(-50%);
-    background-size: cover;
-    transition: transform 0.5s ease-out;
+.bg-video {
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: -1;
 }
 
 .main-content {
@@ -208,4 +204,13 @@ p {
     .main-content {
         padding-bottom: 20px;
     }
+}
+
+.offcanvas .nav-link {
+    color: var(--white-color);
+}
+
+.offcanvas-end {
+    border-top-left-radius: 15px;
+    border-bottom-left-radius: 15px;
 }

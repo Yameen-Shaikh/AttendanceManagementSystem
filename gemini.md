@@ -104,3 +104,29 @@ This document summarizes the recent changes made to the project.
     -   **Centered Content:** Vertically centered the main content on all pages to improve the layout and visual balance.
     -   **Button Styling:** Added a gradient button style (`.btn-grad`) for a more prominent and visually appealing call-to-action button.
     -   **Card Spacing:** Removed inline styles from the profile card to ensure consistent and responsive spacing on all screen sizes.
+
+## 10. Student UI & Background Video Enhancements
+
+### 10.1. Background Video Optimization
+
+-   **Optimized Video File:** The background video was optimized for web streaming (`-movflags +faststart`) and a new version (`bg_optimized.mp4`) was added. The old video files were removed or replaced.
+-   **Preloading:** Added `<link rel="preload">` for the video in `base_student.html` to prioritize its loading.
+-   **Fallback Background Color:** Set a fallback background color (`#010b18`) on the `body` to provide an instant visual feedback while the video is loading.
+-   **Video Element Update:** The `<video>` element was updated to use the optimized video file and a class selector (`.bg-video`) for styling.
+
+### 10.2. Mobile Sidebar Adjustments
+
+-   **Positioning:** The offcanvas sidebar for mobile screens was moved from the left to the right side of the screen.
+-   **Sizing:** The sidebar width is now set to cover 50% of the viewport width.
+-   **Styling:**
+    -   Added rounded corners to the sidebar to match the desktop navbar's aesthetic.
+    -   The color of the sidebar navigation links was changed to white for better visibility.
+-   **Navbar Button:** The hamburger button to toggle the sidebar was moved to the right side of the navbar for better user experience on mobile.
+
+### 10.3. QR Scanner Layout Fix
+
+-   **Responsive Scanner:** Fixed a layout issue on the QR code scanning page where the scanner element was overflowing its container. The width of the scanner is now set to `100%` to ensure it fits within the parent card on all screen sizes.
+
+### 10.4. Other Changes
+
+-   **`ALLOWED_HOSTS`:** Updated an IP address in the `ALLOWED_HOSTS` setting in `ams/settings.py`.
