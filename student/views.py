@@ -11,6 +11,39 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.hashers import make_password
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
+from datetime import datetime
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+
+@login_required
+def get_attendance_calendar_data(request):
+    start_date_str = request.GET.get('start')
+    end_date_str = request.GET.get('end')
+
+    if not start_date_str or not end_date_str:
+        return JsonResponse({'error': 'Start and end dates are required.'}, status=400)
+
+    try:
+        start_date = datetime.fromisoformat(start_date_str.split('T')[0])
+        end_date = datetime.fromisoformat(end_date_str.split('T')[0])
+    except ValueError:
+        return JsonResponse({'error': 'Invalid date format.'}, status=400)
+
+    attendances = Attendance.objects.filter(
+        student=request.user,
+        lecture_date__range=[start_date, end_date]
+    )
+
+    events = []
+    for attendance in attendances:
+        events.append({
+            'title': 'Present' if attendance.is_present else 'Absent',
+            'start': attendance.lecture_date.isoformat(),
+            'allDay': True,
+            'color': '#28a745' if attendance.is_present else '#dc3545'
+        })
+
+    return JsonResponse(events, safe=False)
 
 @login_required
 @require_POST
@@ -45,6 +78,16 @@ def mark_attendance(request):
             return JsonResponse({'success': False, 'message': 'Attendance already marked for this lecture.'})
 
         Attendance.objects.create(student=student, class_field=class_obj, lecture_date=lecture_date, is_present=True)
+
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f'notification_{class_id}',
+            {
+                'type': 'send_notification',
+                'message': 'Attendance marked successfully.'
+            }
+        )
+
         return JsonResponse({'success': True, 'message': 'Attendance marked successfully.'})
 
     except json.JSONDecodeError:

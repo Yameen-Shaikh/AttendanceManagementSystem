@@ -219,3 +219,49 @@ def delete_class_view(request, class_id):
     class_obj.delete()
     messages.success(request, 'Class deleted successfully.')
     return redirect('teacher:teacher_dashboard')
+
+@login_required
+def get_attendance_data(request, class_id):
+    # 1. Validate user and class
+    try:
+        class_obj = Class.objects.get(pk=class_id, teacher=request.user)
+    except Class.DoesNotExist:
+        return JsonResponse({'error': 'Class not found or you do not have permission to view it.'}, status=404)
+
+    # 2. Get all lecture dates for the class
+    lecture_dates = Attendance.objects.filter(class_field=class_obj).values_list('lecture_date', flat=True).distinct().order_by('lecture_date')
+
+    # 3. Get total number of students in the class
+    total_students = class_obj.students.count()
+
+    # 4. Calculate attendance percentage for each lecture date
+    attendance_data = []
+    for date in lecture_dates:
+        present_students = Attendance.objects.filter(class_field=class_obj, lecture_date=date, is_present=True).count()
+        if total_students > 0:
+            percentage = (present_students / total_students) * 100
+        else:
+            percentage = 0
+        attendance_data.append({
+            'date': date.strftime('%Y-%m-%d'),
+            'percentage': round(percentage, 2)
+        })
+
+    # 5. Return data as JSON
+    return JsonResponse(attendance_data, safe=False)
+
+@login_required
+def reports_view(request):
+    if request.user.role != 'Teacher':
+        raise PermissionDenied
+    
+    courses = Course.objects.filter(teacher=request.user)
+    courses_with_classes = {}
+    for course in courses:
+        classes = Class.objects.filter(course=course)
+        courses_with_classes[course] = list(classes)
+
+    context = {
+        'courses_with_classes': courses_with_classes,
+    }
+    return render(request, 'teacher/reports.html', context)

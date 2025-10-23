@@ -11,6 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -43,6 +44,9 @@
                         {% if user.role == 'Teacher' %}
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'teacher:teacher_dashboard' %}">Teacher Dashboard</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'teacher:reports' %}">Reports</a>
                             </li>
                         {% elif user.role == 'Student' %}
                             <li class="nav-item">

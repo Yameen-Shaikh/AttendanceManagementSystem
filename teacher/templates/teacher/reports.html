@@ -1,0 +1,106 @@
+{% extends 'base_teacher.html' %}
+{% load static %}
+
+{% block title %}Reports{% endblock %}
+
+{% block extra_css %}
+<style>
+    .custom-select {
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content_wrapper %}
+<div class="main-content mt-4">
+    {% block content %}
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h5 class="mb-0">Attendance Performance</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row justify-content-center mb-3">
+                            <div class="col-md-6">
+                                <label for="classSelector" class="form-label">Select Class:</label>
+                                <select id="classSelector" class="form-select custom-select">
+                                    {% for course, classes in courses_with_classes.items %}
+                                        {% for class_obj in classes %}
+                                            <option value="{{ class_obj.id }}">{{ course.name }} - {{ class_obj.name }}</option>
+                                        {% endfor %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <canvas id="attendanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const classSelector = document.getElementById('classSelector');
+    const ctx = document.getElementById('attendanceChart').getContext('2d');
+    let attendanceChart;
+
+    function renderChart(data) {
+        const labels = data.map(item => item.date);
+        const percentages = data.map(item => item.percentage);
+
+        if (attendanceChart) {
+            attendanceChart.destroy();
+        }
+
+        attendanceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Attendance Percentage',
+                    data: percentages,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    fill: true,
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+    }
+
+    function fetchAttendanceData() {
+        const classId = classSelector.value;
+        if (classId) {
+            fetch(`/teacher/class/${classId}/attendance-data/`)
+                .then(response => response.json())
+                .then(data => {
+                    renderChart(data);
+                })
+                .catch(error => console.error('Error fetching attendance data:', error));
+        }
+    }
+
+    classSelector.addEventListener('change', fetchAttendanceData);
+
+    // Initial chart load
+    if (classSelector.options.length > 0) {
+        fetchAttendanceData();
+    }
+});
+</script>
+{% endblock %}

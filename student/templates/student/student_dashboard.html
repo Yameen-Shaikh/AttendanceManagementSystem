@@ -5,21 +5,35 @@
 {% block content_wrapper %}
 <div class="main-content student-dashboard-content mt-4">
     {% block content %}
-        {% for enrollment in enrollments %}
-            <div class="card mb-3">
-                <h1 class="mb-4">My Enrolled Courses</h1>
-                <h2 class="h5">{{ enrollment.class_obj.course.name }}</h2>
-                <p class="mb-2">Attendance: <strong>{{ enrollment.attendance_percentage }}%</strong></p>
-                <div class="progress-bar">
-                    <div class="progress" data-progress="{{ enrollment.attendance_percentage|default:0 }}"></div>
-                </div>
-                <a href="{% url 'student:scan_qr_code' enrollment.class_obj.id %}" class="btn-grad mt-3">Mark Today's Attendance</a>
+        <div class="card mb-3">
+            <div class="card-body">
+                <h1 class="mb-4">My Attendance Calendar</h1>
+                <div id="calendar"></div>
             </div>
-        {% empty %}
-            <div class="card">
-                <p>You are not enrolled in any courses yet.</p>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h1 class="mb-4">My Subjects</h1>
+                {% for enrollment in enrollments %}
+                    <h2 class="h5">{{ enrollment.class_obj.subject }}</h2>
+                    <p class="mb-2">Attendance: <strong>{{ enrollment.attendance_percentage }}%</strong></p>
+                    <div class="progress-bar">
+                        <div class="progress" data-progress="{{ enrollment.attendance_percentage|default:0 }}"></div>
+                    </div>
+                    <a href="{% url 'student:scan_qr_code' enrollment.class_obj.id %}" class="btn-grad mt-3">Mark Today's Attendance</a>
+                {% empty %}
+                    <p>You are not enrolled in any subjects yet.</p>
+                {% endfor %}
             </div>
-        {% endfor %}
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h1 class="mb-4">My Attendance Calendar</h1>
+                <div id="calendar"></div>
+            </div>
+        </div>
     {% endblock content %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -28,6 +42,16 @@
             const percentage = bar.dataset.progress;
             bar.style.width = percentage + '%';
         });
+
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            events: '{% url "student:calendar_data" %}',
+            eventColor: '#378006',
+            eventDisplay: 'block',
+            dayMaxEvents: true, // allow "more" link when too many events
+        });
+        calendar.render();
     });
 </script>
 </div>

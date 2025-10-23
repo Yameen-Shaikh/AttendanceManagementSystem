@@ -13,11 +13,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet" />
     {% block extra_css %}{% endblock %}
 </head>
 <body>
     <video autoplay muted loop playsinline class="bg-video">
-        <source src="{% static 'background/bg_optimized.mp4' %}" type="video/mp4">
+        <source src="{% static 'background/bg3.mp4' %}" type="video/mp4">
     </video>
     <nav class="navbar navbar-expand-lg navbar-light fixed-top">
         <div class="container-fluid">
@@ -123,5 +124,6 @@
         });
     </script>
     
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
 </body>
 </html>

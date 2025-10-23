@@ -1,4 +1,9 @@
-Django==5.2.5
-psycopg2-binary
-qrcode
+Django==4.2.1
+psycopg2
+djangorestframework==3.14.0
+djoser==2.2.0
+uuid==1.30
+qrcode==7.4.2
 Pillow
+channels==4.0.0
+
