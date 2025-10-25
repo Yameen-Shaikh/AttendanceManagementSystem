@@ -195,3 +195,24 @@ def student_register_view(request):
         'classes': classes
     }
     return render(request, 'student/register.html', context)
+
+@login_required
+def get_attendance_by_date(request):
+    date_str = request.GET.get('date')
+    if not date_str:
+        return JsonResponse({'error': 'Date not provided.'}, status=400)
+
+    try:
+        date = datetime.fromisoformat(date_str).date()
+    except ValueError:
+        return JsonResponse({'error': 'Invalid date format.'}, status=400)
+
+    attendances = Attendance.objects.filter(student=request.user, lecture_date=date)
+    data = []
+    for attendance in attendances:
+        data.append({
+            'subject': attendance.class_field.subject,
+            'status': 'Present' if attendance.is_present else 'Absent'
+        })
+
+    return JsonResponse(data, safe=False)

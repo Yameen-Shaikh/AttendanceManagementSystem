@@ -13,5 +13,5 @@ urlpatterns = [
     path('mark-attendance/', views.mark_attendance, name='mark_attendance'),
     path('scan-qr/<int:class_id>/', views.scan_qr_code, name='scan_qr_code'),
     path('profile/', views.profile, name='profile'),
-    path('calendar-data/', views.get_attendance_calendar_data, name='calendar_data'),
+    path('attendance-by-date/', views.get_attendance_by_date, name='get_attendance_by_date'),
 ]

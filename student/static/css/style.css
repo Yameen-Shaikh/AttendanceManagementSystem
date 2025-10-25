@@ -109,7 +109,7 @@ p {
 }
 
 .btn-grad {
-    background-image: linear-gradient(to right, #DA4453 0%, #89216B  51%, #DA4453  100%);
+    background-image: linear-gradient(to right, #000000 0%, #434343 51%, #000000 100%);
     margin: 10px;
     padding: 15px 45px;
     text-align: center;
@@ -117,15 +117,17 @@ p {
     transition: 0.5s;
     background-size: 200% auto;
     color: white;
-    box-shadow: 0 0 20px #eee;
+    box-shadow: 0 4px 15px 0 rgba(0, 0, 0, 0.1);
     border-radius: 10px;
     display: block;
+    text-decoration: none;
 }
 
 .btn-grad:hover {
     background-position: right center; /* change the direction of the change here */
     color: #fff;
     text-decoration: none;
+    box-shadow: 0 8px 20px 0 rgba(0, 0, 0, 0.2);
 }
 
 .form-group {
