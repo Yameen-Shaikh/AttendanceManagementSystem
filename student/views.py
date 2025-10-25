@@ -120,7 +120,7 @@ def login_view(request):
                 return redirect('/admin/')
         else:
             messages.error(request, 'Invalid username or password.')
-    return render(request, 'student/login.html')
+    return render(request, 'login.html')
 
 @login_required
 def student_dashboard(request):

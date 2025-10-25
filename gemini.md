@@ -130,3 +130,32 @@ This document summarizes the recent changes made to the project.
 ### 10.4. Other Changes
 
 -   **`ALLOWED_HOSTS`:** Updated an IP address in the `ALLOWED_HOSTS` setting in `ams/settings.py`.
+
+## 11. New Features Implementation
+
+*   **Teacher's Historical Performance Line Chart:**
+    *   Added a line chart to the teacher's dashboard to visualize attendance trends for their classes.
+    *   Implemented a new view `get_attendance_data` to provide data for the chart.
+    *   Used Chart.js to render the chart.
+
+*   **Student's Calendar View and Subject Summary:**
+    *   Added a calendar to the student's dashboard to show their daily attendance status.
+    *   Used FullCalendar to render the calendar.
+    *   Implemented a new view `get_attendance_calendar_data` to provide data for the calendar.
+    *   The student dashboard now displays a summary of their attendance record for each subject.
+
+*   **Real-time Notifications:**
+    *   Implemented real-time notifications for students when they mark their attendance.
+    *   Used Django Channels to handle WebSocket communication.
+    *   Created a `NotificationConsumer` to manage WebSocket connections.
+    *   Modified the `mark_attendance` view to send notifications.
+
+*   **UI and Navigation:**
+    *   Created a new "Reports" page for teachers.
+    *   Moved the "Attendance Performance" chart to the "Reports" page.
+    *   Added a "Reports" link to the teacher's navbar.
+    *   Centered and widened the "Select Class" dropdown on the reports page for better visibility.
+
+*   **Dependencies:**
+    *   Added `channels` to `requirements.txt`.
+    *   Resolved installation issues with `Pillow` and `psycopg2-binary` by updating `Pillow` and switching to `psycopg2`.
