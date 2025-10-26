@@ -47,7 +47,13 @@
                             </li>
                         {% elif user.role == 'Student' %}
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'student:student_dashboard' %}">Student Dashboard</a>
+                                <a class="nav-link" href="{% url 'student:student_dashboard' %}">Dashboard</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'student:reports' %}">Reports</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'student:scan_qr_code' 0 %}">Scan</a>
                             </li>
                         {% endif %}
                         <li class="nav-item">
@@ -91,6 +97,12 @@
                     {% elif user.role == 'Student' %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'student:student_dashboard' %}">Student Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'student:reports' %}">Reports</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'student:scan_qr_code' %}">Scan</a>
                         </li>
                     {% endif %}
                     <li class="nav-item">

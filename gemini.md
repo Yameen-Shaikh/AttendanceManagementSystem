@@ -160,6 +160,50 @@ This document summarizes the recent changes made to the project.
     *   Added `channels` to `requirements.txt`.
     *   Resolved installation issues with `Pillow` and `psycopg2-binary` by updating `Pillow` and switching to `psycopg2`.
 
+## 12. Student Dashboard and Navigation Enhancements
+
+-   **Student Dashboard Content Refinement:**
+    -   The `student/templates/student/student_dashboard.html` was updated to clearly display academic details (course, class, subject, and attendance percentage) for each enrolled class within individual cards.
+    -   "Unenroll" and "Enroll" buttons were ensured to consistently use the `btn-grad` styling for a uniform look.
+
+-   **Student Reports Page Implementation:**
+    -   A "Reports" link was added to the main navigation bar and the off-canvas sidebar in `student/templates/base_student.html` for student users.
+    -   A new template, `student/templates/student/reports.html`, was created. This page integrates Chart.js to visualize the student's attendance performance across their enrolled classes, leveraging the existing `get_attendance_data` view.
+
+-   **Student QR Scan Functionality Enhancement:**
+    -   A "Scan" link was added to the main navigation bar and the off-canvas sidebar in `student/templates/base_student.html` for student users.
+    -   The `student/urls.py` file was modified to remove the `class_id` parameter from the `scan_qr_code` URL pattern, allowing direct access to the QR scanner.
+    -   The `scan_qr_code` view in `student/views.py` was updated to no longer require a `class_id` parameter, simplifying the scanning process for students.
+
+## 13. Teacher Approval Mechanism
+
+*   **Teacher's Historical Performance Line Chart:**
+    *   Added a line chart to the teacher's dashboard to visualize attendance trends for their classes.
+    *   Implemented a new view `get_attendance_data` to provide data for the chart.
+    *   Used Chart.js to render the chart.
+
+*   **Student's Calendar View and Subject Summary:**
+    *   Added a calendar to the student's dashboard to show their daily attendance status.
+    *   Used FullCalendar to render the calendar.
+    *   Implemented a new view `get_attendance_calendar_data` to provide data for the calendar.
+    *   The student dashboard now displays a summary of their attendance record for each subject.
+
+*   **Real-time Notifications:**
+    *   Implemented real-time notifications for students when they mark their attendance.
+    *   Used Django Channels to handle WebSocket communication.
+    *   Created a `NotificationConsumer` to manage WebSocket connections.
+    *   Modified the `mark_attendance` view to send notifications.
+
+*   **UI and Navigation:**
+    *   Created a new "Reports" page for teachers.
+    *   Moved the "Attendance Performance" chart to the "Reports" page.
+    *   Added a "Reports" link to the teacher's navbar.
+    *   Centered and widened the "Select Class" dropdown on the reports page for better visibility.
+
+*   **Dependencies:**
+    *   Added `channels` to `requirements.txt`.
+    *   Resolved installation issues with `Pillow` and `psycopg2-binary` by updating `Pillow` and switching to `psycopg2`.
+
 ## 12. Teacher Approval Mechanism
 
 -   **Problem:** Teachers were able to log in without being approved by an administrator.

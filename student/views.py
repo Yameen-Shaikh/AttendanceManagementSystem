@@ -132,21 +132,23 @@ def student_dashboard(request):
     
     enrolled_classes = request.user.enrolled_classes.all()
     enrollments = []
-    for class_obj in enrolled_classes:
-        total_lectures = Attendance.objects.filter(class_field=class_obj).values('lecture_date').distinct().count()
-        attended_lectures = Attendance.objects.filter(class_field=class_obj, student=request.user, is_present=True).count()
-        attendance_percentage = (attended_lectures / total_lectures) * 100 if total_lectures > 0 else 0
-        enrollments.append({
-            'class_obj': class_obj,
-            'attendance_percentage': round(attendance_percentage)
-        })
-    
-    return render(request, 'student/student_dashboard.html', {'enrollments': enrollments})
+    if enrolled_classes.exists():
+        for class_obj in enrolled_classes:
+            total_lectures = Attendance.objects.filter(class_field=class_obj).values('lecture_date').distinct().count()
+            attended_lectures = Attendance.objects.filter(class_field=class_obj, student=request.user, is_present=True).count()
+            attendance_percentage = (attended_lectures / total_lectures) * 100 if total_lectures > 0 else 0
+            enrollments.append({
+                'class_obj': class_obj,
+                'attendance_percentage': round(attendance_percentage)
+            })
+        return render(request, 'student/student_dashboard.html', {'enrollments': enrollments})
+    else:
+        classes = Class.objects.all()
+        return render(request, 'student/student_dashboard.html', {'classes': classes})
 
 @login_required
-def scan_qr_code(request, class_id):
-    class_obj = get_object_or_404(Class, id=class_id)
-    return render(request, 'student/scan_qr.html', {'class_obj': class_obj})
+def scan_qr_code(request):
+    return render(request, 'student/scan_qr.html')
 
 @login_required
 def profile(request):
@@ -215,3 +217,37 @@ def get_attendance_by_date(request):
         })
 
     return JsonResponse(data, safe=False)
+
+@login_required
+def unenroll(request, class_id):
+    class_obj = get_object_or_404(Class, id=class_id)
+    if request.user in class_obj.students.all():
+        class_obj.students.remove(request.user)
+        messages.success(request, f'You have been unenrolled from {class_obj.name}.')
+    else:
+        messages.error(request, f'You are not enrolled in {class_obj.name}.')
+    return redirect('student:student_dashboard')
+
+@login_required
+    return redirect('student:student_dashboard')
+
+@login_required
+def reports(request):
+    return render(request, 'student/reports.html')
+
+@login_required
+def get_attendance_data(request):
+    enrolled_classes = request.user.enrolled_classes.all()
+    datasets = []
+    labels = []
+    for class_obj in enrolled_classes:
+        attendance_records = Attendance.objects.filter(class_field=class_obj, student=request.user).order_by('lecture_date')
+        if not labels:
+            labels = [record.lecture_date.strftime('%Y-%m-%d') for record in attendance_records]
+        datasets.append({
+            'label': class_obj.subject,
+            'data': [1 if record.is_present else 0 for record in attendance_records],
+            'borderColor': '#%06x' % random.randint(0, 0xFFFFFF),
+            'fill': False
+        })
+    return JsonResponse({'labels': labels, 'datasets': datasets})
