@@ -159,3 +159,12 @@ This document summarizes the recent changes made to the project.
 *   **Dependencies:**
     *   Added `channels` to `requirements.txt`.
     *   Resolved installation issues with `Pillow` and `psycopg2-binary` by updating `Pillow` and switching to `psycopg2`.
+
+## 12. Teacher Approval Mechanism
+
+-   **Problem:** Teachers were able to log in without being approved by an administrator.
+-   **Solution:**
+    -   Removed the `is_approved` field from the `CustomUser` model.
+    -   The `login_view` in `ams/views.py` was modified to only check for the `is_active` flag.
+    -   The `teacher_register_view` in `teacher/views.py` was modified to set `is_active` to `False` for new registrations.
+    -   The `student/admin.py` was modified to allow administrators to activate users.

@@ -1,2 +1,6 @@
 1. Student should be able to unroll from course.
-2. Student should be able to scan the qr code
+2. In student dashboard, display course, class and subjects.
+3. When a class is deleted it also deletes the attendance history from student. 
+5. When different teachers have created course and classes, it becomes seperate rather than merging. While student registration it shows multiple course and classes with same name having different subjects as different teachers have created it.
+6. When a student scans the QR code it gives msg, "Already marked....". It should say "marked present"
+7. Add report in student app same as teacher, showing all the subjects.

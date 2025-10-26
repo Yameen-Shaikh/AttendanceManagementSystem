@@ -111,6 +111,9 @@ def login_view(request):
         password = request.POST.get('password')
         user = authenticate(request, username=email, password=password)
         if user is not None:
+            if user.role == 'Teacher' and not user.is_approved:
+                messages.error(request, 'Invalid email or password/Approval pending')
+                return redirect('login')
             login(request, user)
             if user.role == 'Teacher':
                 return redirect('teacher:teacher_dashboard')
@@ -149,11 +152,7 @@ def scan_qr_code(request, class_id):
 def profile(request):
     return render(request, 'student/profile.html')
 
-from django.contrib.auth import logout
 
-def logout_view(request):
-    logout(request)
-    return redirect('login')
 
 def student_register_view(request):
     if request.method == 'POST':

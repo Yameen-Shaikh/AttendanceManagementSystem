@@ -19,6 +19,9 @@ def login_view(request):
         password = request.POST.get('password')
         user = authenticate(request, username=email, password=password)
         if user is not None:
+            if not user.is_active:
+                messages.error(request, 'Invalid username or password.')
+                return redirect('login')
             login(request, user)
             if user.role == 'Teacher':
                 return redirect('teacher:teacher_dashboard')
@@ -28,7 +31,7 @@ def login_view(request):
                 return redirect('/admin/')
         else:
             messages.error(request, 'Invalid username or password.')
-    return render(request, 'registration/login.html')
+    return render(request, 'login.html')
 
 def logout_view(request):
     logout(request)
