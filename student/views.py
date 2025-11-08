@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from .models import CustomUser
-from teacher.models import Class, Attendance, QRCode
+from teacher.models import Class, Attendance, QRCode, Lecture
 from django.http import JsonResponse, HttpResponseForbidden
 from django.core.exceptions import PermissionDenied
 from django.views.decorators.http import require_POST
@@ -30,18 +30,26 @@ def get_attendance_calendar_data(request):
     except ValueError:
         return JsonResponse({'error': 'Invalid date format.'}, status=400)
 
-    attendances = Attendance.objects.filter(
-        student=request.user,
-        lecture_date__range=[start_date, end_date]
+    student = request.user
+    enrolled_classes = student.enrolled_classes.all()
+    lectures = Lecture.objects.filter(
+        class_obj__in=enrolled_classes,
+        date__range=[start_date, end_date]
     )
 
+    attended_lectures = Attendance.objects.filter(
+        student=student,
+        lecture__in=lectures
+    ).values_list('lecture_id', flat=True)
+
     events = []
-    for attendance in attendances:
+    for lecture in lectures:
+        is_present = lecture.id in attended_lectures
         events.append({
-            'title': 'Present' if attendance.is_present else 'Absent',
-            'start': attendance.lecture_date.isoformat(),
+            'title': 'Present' if is_present else 'Absent',
+            'start': lecture.date.isoformat(),
             'allDay': True,
-            'color': '#28a745' if attendance.is_present else '#dc3545'
+            'color': '#28a745' if is_present else '#dc3545'
         })
 
     return JsonResponse(events, safe=False)
@@ -68,18 +76,20 @@ def mark_attendance(request):
         if student.role != 'Student':
             return JsonResponse({'success': False, 'message': 'Only students can mark attendance.'})
 
-        class_obj = qr_code.class_field
+        lecture = qr_code.lecture
+        if not lecture:
+            return JsonResponse({'success': False, 'message': 'This QR code is not linked to a lecture.'})
+            
+        class_obj = lecture.class_obj
         
         # Check if the student is enrolled in the class
         if student not in class_obj.students.all():
             return JsonResponse({'success': False, 'message': 'You are not enrolled in this class.'})
 
-        lecture_date = timezone.now().date()
-
-        if Attendance.objects.filter(student=student, class_field=class_obj, lecture_date=lecture_date).exists():
+        if Attendance.objects.filter(student=student, lecture=lecture).exists():
             return JsonResponse({'success': False, 'message': 'Attendance already marked for this lecture.'})
 
-        Attendance.objects.create(student=student, class_field=class_obj, lecture_date=lecture_date, is_present=True)
+        Attendance.objects.create(student=student, lecture=lecture)
 
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
@@ -136,8 +146,8 @@ def student_dashboard(request):
     enrollments = []
     if enrolled_classes.exists():
         for class_obj in enrolled_classes:
-            total_lectures = Attendance.objects.filter(class_field=class_obj).values('lecture_date').distinct().count()
-            attended_lectures = Attendance.objects.filter(class_field=class_obj, student=request.user, is_present=True).count()
+            total_lectures = Lecture.objects.filter(class_obj=class_obj).count()
+            attended_lectures = Attendance.objects.filter(lecture__class_obj=class_obj, student=request.user).count()
             attendance_percentage = (attended_lectures / total_lectures) * 100 if total_lectures > 0 else 0
             enrollments.append({
                 'class_obj': class_obj,
@@ -212,12 +222,24 @@ def get_attendance_by_date(request):
     except ValueError:
         return JsonResponse({'error': 'Invalid date format.'}, status=400)
 
-    attendances = Attendance.objects.filter(student=request.user, lecture_date=date)
+    student = request.user
+    enrolled_classes = student.enrolled_classes.all()
+    lectures = Lecture.objects.filter(
+        class_obj__in=enrolled_classes,
+        date=date
+    )
+
+    attended_lectures = Attendance.objects.filter(
+        student=student,
+        lecture__in=lectures
+    ).values_list('lecture_id', flat=True)
+
     data = []
-    for attendance in attendances:
+    for lecture in lectures:
+        is_present = lecture.id in attended_lectures
         data.append({
-            'subject': attendance.class_field.subject,
-            'status': 'Present' if attendance.is_present else 'Absent'
+            'subject': lecture.class_obj.subject,
+            'status': 'Present' if is_present else 'Absent'
         })
 
     return JsonResponse(data, safe=False)
@@ -248,17 +270,33 @@ def reports(request):
 
 @login_required
 def get_attendance_data(request):
-    enrolled_classes = request.user.enrolled_classes.all()
-    datasets = []
-    labels = []
-    for class_obj in enrolled_classes:
-        attendance_records = Attendance.objects.filter(class_field=class_obj, student=request.user).order_by('lecture_date')
-        if not labels:
-            labels = [record.lecture_date.strftime('%Y-%m-%d') for record in attendance_records]
-        datasets.append({
-            'label': class_obj.subject,
-            'data': [1 if record.is_present else 0 for record in attendance_records],
-            'borderColor': '#%06x' % random.randint(0, 0xFFFFFF),
-            'fill': False
-        })
-    return JsonResponse({'labels': labels, 'datasets': datasets})
+    student = request.user
+    enrolled_classes = student.enrolled_classes.all()
+    
+    # Get all lectures for the enrolled classes
+    lectures = Lecture.objects.filter(class_obj__in=enrolled_classes).order_by('date').values('id', 'date', 'class_obj__subject')
+    
+    # Get all attendance records for the student
+    attended_lecture_ids = set(Attendance.objects.filter(student=student).values_list('lecture_id', flat=True))
+    
+    # Process data for the chart
+    labels = sorted(list(set([l['date'] for l in lectures])))
+    datasets = {}
+
+    for lecture in lectures:
+        subject = lecture['class_obj__subject']
+        if subject not in datasets:
+            datasets[subject] = {
+                'label': subject,
+                'data': [0] * len(labels),
+                'borderColor': '#%06x' % random.randint(0, 0xFFFFFF),
+                'fill': False
+            }
+        
+        label_index = labels.index(lecture['date'])
+        if lecture['id'] in attended_lecture_ids:
+            datasets[subject]['data'][label_index] = 1
+
+    formatted_labels = [date.strftime('%Y-%m-%d') for date in labels]
+    
+    return JsonResponse({'labels': formatted_labels, 'datasets': list(datasets.values())})

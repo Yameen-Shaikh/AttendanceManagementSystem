@@ -158,7 +158,7 @@ This document summarizes the recent changes made to the project.
 
 *   **Dependencies:**
     *   Added `channels` to `requirements.txt`.
-    *   Resolved installation issues with `Pillow` and `psycopg2-binary` by updating `Pillow` and switching to `psycopg2`.
+    -   Resolved installation issues with `Pillow` and `psycopg2-binary` by updating `Pillow` and switching to `psycopg2`.
 
 ## 12. Student Dashboard and Navigation Enhancements
 
@@ -202,7 +202,7 @@ This document summarizes the recent changes made to the project.
 
 *   **Dependencies:**
     *   Added `channels` to `requirements.txt`.
-    *   Resolved installation issues with `Pillow` and `psycopg2-binary` by updating `Pillow` and switching to `psycopg2`.
+    -   Resolved installation issues with `Pillow` and `psycopg2-binary` by updating `Pillow` and switching to `psycopg2`.
 
 ## 12. Teacher Approval Mechanism
 
@@ -236,3 +236,34 @@ This document summarizes the recent changes made to the project.
     -   The styling for cards in the student application has been centralized to ensure a consistent look and feel across all pages.
     -   Card and layout styles have been adjusted for improved responsiveness and accurate centering on mobile devices.
     -   The course title on the student dashboard is now styled to be white for better visibility.
+
+## 15. Lecture-Based Attendance Tracking
+
+To enable accurate tracking of missed attendance, a new `Lecture` model was introduced. This provides a definitive record of all scheduled class sessions, against which student attendance is recorded.
+
+-   **New `Lecture` Model:**
+    -   A `Lecture` model was created in the `teacher` app to store details of each scheduled class session (class, date, time).
+    -   The `Attendance` and `QRCode` models were updated to link directly to a `Lecture` instance, replacing the previous reliance on `class` and `date` fields.
+    -   Generated and applied the necessary database migrations.
+
+-   **Enhanced Teacher Workflow:**
+    -   Teachers can now schedule individual lectures for their classes via a new "Schedule Lecture" page.
+    -   A "View Lectures" page was added, listing all scheduled lectures for a class.
+    -   QR code generation is now tied to a specific lecture instance, initiated from the lecture list.
+
+-   **Updated Student Workflow:**
+    -   The attendance marking process was updated to create an `Attendance` record linked to the specific `Lecture` that was scanned.
+    -   The QR code scanning page (`scan_qr.html`) was improved to show scan results (success or error) in a pop-up modal for a cleaner user experience.
+
+-   **Accurate Reporting:**
+    -   Attendance percentage calculations in both the student dashboard and teacher reports were updated to be based on the total number of scheduled lectures versus attended lectures.
+
+-   **Data Pruning Feature:**
+    -   To manage database growth, a feature was added for teachers to delete old lecture records.
+    -   This is accessible via a "Delete old lectures" button on the lecture list page, which reveals a collapsible card with a form to specify the age of records to prune.
+    -   The logic is handled in a new `prune_lectures_view` and is scoped to the teacher's own classes for security.
+    -   A corresponding management command `prune_lectures` was also created for potential CLI-based or scheduled cleanup.
+
+-   **UI/UX Refinements:**
+    -   The lecture list page (`view_lectures.html`) was refined through several iterations to achieve a wide, single-column layout where the pruning options appear below the main card.
+    -   Fixed a CSS issue in `teacher_style.css` where a fixed card width was preventing responsive layouts.

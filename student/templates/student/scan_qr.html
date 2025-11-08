@@ -12,6 +12,24 @@
         <div id="qr-reader-results"></div>
     </div>
 
+    <!-- Modal -->
+    <div class="modal fade" id="scanResultModal" tabindex="-1" aria-labelledby="scanResultModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="scanResultModalLabel">Scan Result</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body" id="scanResultModalBody">
+            ...
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -31,15 +49,26 @@
                 })
                 .then(response => response.json())
                 .then(data => {
+                    const modalBody = document.getElementById('scanResultModalBody');
+                    const modalTitle = document.getElementById('scanResultModalLabel');
                     if (data.success) {
-                        document.getElementById('qr-reader-results').innerHTML = `<div class="success">${data.message}</div>`;
+                        modalTitle.innerText = 'Success';
+                        modalBody.innerHTML = `<p class="text-success">${data.message}</p>`;
                     } else {
-                        document.getElementById('qr-reader-results').innerHTML = `<div class="error">${data.message}</div>`;
+                        modalTitle.innerText = 'Error';
+                        modalBody.innerHTML = `<p class="text-danger">${data.message}</p>`;
                     }
+                    var myModal = new bootstrap.Modal(document.getElementById('scanResultModal'), {});
+                    myModal.show();
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    document.getElementById('qr-reader-results').innerHTML = `<div class="error">An error occurred.</div>`;
+                    const modalBody = document.getElementById('scanResultModalBody');
+                    const modalTitle = document.getElementById('scanResultModalLabel');
+                    modalTitle.innerText = 'Error';
+                    modalBody.innerHTML = `<p class="text-danger">An error occurred.</p>`;
+                    var myModal = new bootstrap.Modal(document.getElementById('scanResultModal'), {});
+                    myModal.show();
                 });
             }
 

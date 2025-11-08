@@ -1,0 +1,72 @@
+{% extends 'base_teacher.html' %}
+{% load static %}
+
+{% block title %}View Lectures{% endblock %}
+
+{% block content_wrapper %} {# Overriding the default container to be wider #}
+<div class="main-content container-fluid mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10"> {# A wide, centered column for the content #}
+            
+            <div class="card login-card">
+                <div class="card-body">
+                    <h1 class="gradient-text">Lectures for {{ class_obj.name }}</h1>
+                    <div class="mt-3 mb-4">
+                        <a href="{% url 'teacher:schedule_lecture' class_obj.id %}" class="btn btn-primary btn-sm">Schedule New Lecture</a>
+                        <button class="btn btn-danger btn-sm ms-3" type="button" data-bs-toggle="collapse" data-bs-target="#pruneCard" aria-expanded="false" aria-controls="pruneCard">
+                            Delete old lectures
+                        </button>
+                    </div>
+
+                    {% if lectures %}
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for lecture in lectures %}
+                                    <tr>
+                                        <td>{{ lecture.date }}</td>
+                                        <td>{{ lecture.time }}</td>
+                                        <td>
+                                            <a href="{% url 'teacher:generate_qr_code' lecture.id %}" class="btn btn-primary btn-sm">Generate QR</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p>No lectures scheduled yet.</p>
+                    {% endif %}
+                    
+                    <p class="text-center mt-3">
+                        <a href="{% url 'teacher:teacher_dashboard' %}">Back to Dashboard</a>
+                    </p>
+                </div>
+            </div>
+
+            <div class="collapse mt-4" id="pruneCard">
+                <div class="card login-card">
+                    <div class="card-body">
+                        <h3 class="gradient-text">Prune Old Lectures</h3>
+                        <p>This will permanently delete lecture records older than the specified number of days for all your classes.</p>
+                        <form method="post" action="{% url 'teacher:prune_lectures' %}" onsubmit="return confirm('Are you sure you want to permanently delete old lecture records? This action cannot be undone.');">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label for="days">Delete lectures older than (days):</label>
+                                <input type="number" name="days" id="days" class="form-control" value="1825" required>
+                            </div>
+                            <button type="submit" class="btn btn-danger mt-2">Delete Records</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

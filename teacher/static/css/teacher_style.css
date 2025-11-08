@@ -208,7 +208,7 @@ input[type="password"],
 }
 
 .login-card {
-    width: 400px;
+    /* width: 400px; */ /* Removed fixed width to allow responsiveness within grid */
     box-shadow: 0 0 15px rgba(237, 159, 98,.5);
 }
 

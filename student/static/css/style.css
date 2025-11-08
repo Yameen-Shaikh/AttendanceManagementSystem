@@ -33,8 +33,9 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center; /* Vertically center content */
-    height: 100vh; /* Changed from min-height */
-    box-sizing: border-box;
+    min-height: 100vh; /* Ensure it's tall enough */
+    position: relative; /* Needed for absolute positioning of children */
+    box-sizing: border-sizing;
 }
 
 .card {
@@ -44,14 +45,21 @@ body {
     border-radius: 15px;
     box-shadow: 0 10px 30px var(--shadow-color);
     padding: 30px;
-    width: 100%;
-    max-width: 600px; /* Added max-width */
-    margin: 0; /* Removed margin for centering and spacing */
+    width: 90%; /* Changed from 100% */
+    max-width: 600px;
     text-align: center;
     border: 1px solid var(--card-border-color);
-    animation: fadeInSlideUp 0.5s ease-out forwards;
+    
+    /* Absolute centering properties */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0; /* Ensure no external margins interfere */
+
+    /* Animation properties (modified) */
     opacity: 0;
-    transform: translateY(20px);
+    animation: fadeInSlideUp 0.5s ease-out forwards;
 }
 
 .sticky-top {
@@ -87,7 +95,6 @@ body > .navbar {
 @keyframes fadeInSlideUp {
     to {
         opacity: 1;
-        transform: translateY(0);
     }
 }
 
@@ -234,4 +241,31 @@ p {
 
 .course-title {
     color: var(--white-color) !important;
+}
+
+/* Modal Styles */
+.modal-content {
+    background: var(--card-bg-color);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 15px;
+    box-shadow: 0 10px 30px var(--shadow-color);
+    border: 1px solid var(--card-border-color);
+    color: var(--white-color);
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--card-border-color);
+}
+
+.modal-footer {
+    border-top: 1px solid var(--card-border-color);
+}
+
+.modal-title {
+    color: var(--white-color);
+}
+
+.btn-close {
+    filter: invert(1); /* Make the close button white */
 }
