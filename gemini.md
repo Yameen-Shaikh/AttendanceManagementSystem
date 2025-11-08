@@ -186,7 +186,7 @@ This document summarizes the recent changes made to the project.
     *   Added a calendar to the student's dashboard to show their daily attendance status.
     *   Used FullCalendar to render the calendar.
     *   Implemented a new view `get_attendance_calendar_data` to provide data for the calendar.
-    *   The student dashboard now displays a summary of their attendance record for each subject.
+    -   The student dashboard now displays a summary of their attendance record for each subject.
 
 *   **Real-time Notifications:**
     *   Implemented real-time notifications for students when they mark their attendance.
@@ -212,3 +212,27 @@ This document summarizes the recent changes made to the project.
     -   The `login_view` in `ams/views.py` was modified to only check for the `is_active` flag.
     -   The `teacher_register_view` in `teacher/views.py` was modified to set `is_active` to `False` for new registrations.
     -   The `student/admin.py` was modified to allow administrators to activate users.
+
+## 14. Student Application UX and Feature Enhancements
+
+-   **Student Dashboard UI/UX Overhaul**:
+    -   The student dashboard layout has been simplified to feature a single, centered card for a cleaner and more focused user experience.
+    -   The course name is now prominently displayed as the title within the card.
+    -   A confirmation dialog has been added to the "Unenroll" action to prevent accidental removal from a course.
+
+-   **Sticky Navbar**:
+    -   The main navigation bar in the student application is now sticky, ensuring it remains accessible while scrolling through content.
+
+-   **Roll Number for Students**:
+    -   An optional `roll_no` field has been added to the `CustomUser` model, allowing students to provide a roll number during registration if available.
+    -   The student registration form has been updated to include the new "Roll No" field.
+
+-   **Enhanced QR Code Scanning**:
+    -   The class selection dropdown has been removed from the QR code scanning page for a more streamlined workflow.
+    -   The application now automatically identifies the class associated with the scanned QR code.
+    -   A new validation check ensures that a student is enrolled in the respective class before an attendance record is created.
+
+-   **Styling and CSS Refinements**:
+    -   The styling for cards in the student application has been centralized to ensure a consistent look and feel across all pages.
+    -   Card and layout styles have been adjusted for improved responsiveness and accurate centering on mobile devices.
+    -   The course title on the student dashboard is now styled to be white for better visibility.

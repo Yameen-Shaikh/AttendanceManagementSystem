@@ -33,6 +33,7 @@ class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
     subjects = models.TextField(blank=True, null=True)
+    roll_no = models.CharField(max_length=20, null=True, blank=True)
 
     objects = CustomUserManager()
 

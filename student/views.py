@@ -7,6 +7,7 @@ from django.http import JsonResponse, HttpResponseForbidden
 from django.core.exceptions import PermissionDenied
 from django.views.decorators.http import require_POST
 import json
+import random
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.hashers import make_password
 from django.contrib import messages
@@ -51,18 +52,14 @@ def mark_attendance(request):
     try:
         data = json.loads(request.body)
         qr_code_data = data.get('qr_code_data')
-        class_id = data.get('class_id')
 
-        if not qr_code_data or not class_id:
-            return JsonResponse({'success': False, 'message': 'QR code data or class ID not provided.'})
+        if not qr_code_data:
+            return JsonResponse({'success': False, 'message': 'QR code data not provided.'})
 
         try:
             qr_code = QRCode.objects.get(qr_code_data=qr_code_data)
         except QRCode.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Invalid QR code.'})
-
-        if qr_code.class_field.id != class_id:
-            return JsonResponse({'success': False, 'message': 'QR code does not match the selected class.'})
 
         if timezone.now() > qr_code.expires_at:
             return JsonResponse({'success': False, 'message': 'QR code has expired.'})
@@ -72,6 +69,11 @@ def mark_attendance(request):
             return JsonResponse({'success': False, 'message': 'Only students can mark attendance.'})
 
         class_obj = qr_code.class_field
+        
+        # Check if the student is enrolled in the class
+        if student not in class_obj.students.all():
+            return JsonResponse({'success': False, 'message': 'You are not enrolled in this class.'})
+
         lecture_date = timezone.now().date()
 
         if Attendance.objects.filter(student=student, class_field=class_obj, lecture_date=lecture_date).exists():
@@ -81,14 +83,14 @@ def mark_attendance(request):
 
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
-            f'notification_{class_id}',
+            f'notification_{class_obj.id}',
             {
                 'type': 'send_notification',
                 'message': 'Attendance marked successfully.'
             }
         )
 
-        return JsonResponse({'success': True, 'message': 'Attendance marked successfully.'})
+        return JsonResponse({'success': True, 'message': f'Attendance marked successfully for {class_obj.subject}.'})
 
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'message': 'Invalid JSON data.'})
@@ -162,6 +164,7 @@ def student_register_view(request):
         email = request.POST.get('email')
         password = request.POST.get('password')
         class_id = request.POST.get('class_id')
+        roll_no = request.POST.get('roll_no')
 
         if CustomUser.objects.filter(email=email).exists():
             messages.error(request, 'Email already exists.')
@@ -173,7 +176,8 @@ def student_register_view(request):
             email=email,
             password=make_password(password),
             role='Student',
-            is_active=True
+            is_active=True,
+            roll_no=roll_no
         )
         
         if class_id:
@@ -229,6 +233,13 @@ def unenroll(request, class_id):
     return redirect('student:student_dashboard')
 
 @login_required
+def enroll(request, class_id):
+    class_obj = get_object_or_404(Class, id=class_id)
+    if request.user not in class_obj.students.all():
+        class_obj.students.add(request.user)
+        messages.success(request, f'You have been enrolled in {class_obj.name}.')
+    else:
+        messages.warning(request, f'You are already enrolled in {class_obj.name}.')
     return redirect('student:student_dashboard')
 
 @login_required

@@ -7,6 +7,7 @@
     {% block content %}
     <div class="card">
         <h1 class="gradient-text">Scan QR Code</h1>
+
         <div id="qr-reader" style="width: 100%"></div>
         <div id="qr-reader-results"></div>
     </div>
@@ -14,26 +15,9 @@
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const classId = {{ class_obj.id }};
-            const chatSocket = new WebSocket(
-                'ws://'
-                + window.location.host
-                + '/ws/notification/'
-                + classId
-                + '/'
-            );
-
-            chatSocket.onmessage = function(e) {
-                const data = JSON.parse(e.data);
-                alert(data.message);
-            };
-
-            chatSocket.onclose = function(e) {
-                console.error('Chat socket closed unexpectedly');
-            };
-
             function onScanSuccess(decodedText, decodedResult) {
                 console.log(`Code matched = ${decodedText}`, decodedResult);
+                
                 // Send the QR code data to the server
                 fetch("{% url 'student:mark_attendance' %}", {
                     method: 'POST',
@@ -42,8 +26,7 @@
                         'X-CSRFToken': '{{ csrf_token }}'
                     },
                     body: JSON.stringify({
-                        'qr_code_data': decodedText,
-                        'class_id': classId
+                        'qr_code_data': decodedText
                     })
                 })
                 .then(response => response.json())

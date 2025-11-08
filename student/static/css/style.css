@@ -33,7 +33,8 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center; /* Vertically center content */
-    min-height: 100vh;
+    height: 100vh; /* Changed from min-height */
+    box-sizing: border-box;
 }
 
 .card {
@@ -44,12 +45,26 @@ body {
     box-shadow: 0 10px 30px var(--shadow-color);
     padding: 30px;
     width: 100%;
-    max-width: 400px;
+    max-width: 600px; /* Added max-width */
+    margin: 0; /* Removed margin for centering and spacing */
     text-align: center;
     border: 1px solid var(--card-border-color);
     animation: fadeInSlideUp 0.5s ease-out forwards;
     opacity: 0;
     transform: translateY(20px);
+}
+
+.sticky-top {
+    position: -webkit-sticky; /* For Safari */
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+}
+
+.enrollment-card {
+    background: transparent;
+    border: none;
+    padding: 10px;
     margin-bottom: 20px;
 }
 
@@ -215,4 +230,8 @@ p {
 .offcanvas-end {
     border-top-left-radius: 15px;
     border-bottom-left-radius: 15px;
+}
+
+.course-title {
+    color: var(--white-color) !important;
 }
