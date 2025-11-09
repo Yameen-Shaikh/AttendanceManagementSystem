@@ -26,10 +26,8 @@
                 <input type="time" name="time" id="time" required>
             </div>
             <button type="submit" class="btn-primary">Schedule</button>
+            <a href="{% url 'teacher:teacher_dashboard' %}" class="btn btn-primary btn-sm me-2">Back to Dashboard</a>
         </form>
-        <p class="text-center mt-3">
-            <a href="{% url 'teacher:teacher_dashboard' %}">Back to Dashboard</a>
-        </p>
     </div>
     {% endblock %}
 </div>

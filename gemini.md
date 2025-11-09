@@ -267,3 +267,13 @@ To enable accurate tracking of missed attendance, a new `Lecture` model was intr
 -   **UI/UX Refinements:**
     -   The lecture list page (`view_lectures.html`) was refined through several iterations to achieve a wide, single-column layout where the pruning options appear below the main card.
     -   Fixed a CSS issue in `teacher_style.css` where a fixed card width was preventing responsive layouts.
+
+## 16. Teacher UI Enhancements
+
+- **Reports Page:**
+    - Widened the class selection dropdown on the reports page for better visibility.
+    - Moved the inline styles to the `teacher_style.css` stylesheet.
+- **Button Styling:**
+    - Standardized button styles across the teacher dashboard, schedule lecture, and view lectures pages to use the `btn-primary` class for a consistent look and feel.
+- **Navigation:**
+    - Removed the "View Report" button from the teacher dashboard to streamline the UI.

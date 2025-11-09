@@ -3,14 +3,6 @@
 
 {% block title %}Reports{% endblock %}
 
-{% block extra_css %}
-<style>
-    .custom-select {
-        width: 100%;
-    }
-</style>
-{% endblock %}
-
 {% block content_wrapper %}
 <div class="main-content mt-4">
     {% block content %}
@@ -23,7 +15,7 @@
                     </div>
                     <div class="card-body">
                         <div class="row justify-content-center mb-3">
-                            <div class="col-md-6">
+                            <div class="col-md-10">
                                 <label for="classSelector" class="form-label">Select Class:</label>
                                 <select id="classSelector" class="form-select custom-select">
                                     {% for course, classes in courses_with_classes.items %}

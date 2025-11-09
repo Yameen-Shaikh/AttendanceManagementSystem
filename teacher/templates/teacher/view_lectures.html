@@ -12,10 +12,6 @@
                 <div class="card-body">
                     <h1 class="gradient-text">Lectures for {{ class_obj.name }}</h1>
                     <div class="mt-3 mb-4">
-                        <a href="{% url 'teacher:schedule_lecture' class_obj.id %}" class="btn btn-primary btn-sm">Schedule New Lecture</a>
-                        <button class="btn btn-danger btn-sm ms-3" type="button" data-bs-toggle="collapse" data-bs-target="#pruneCard" aria-expanded="false" aria-controls="pruneCard">
-                            Delete old lectures
-                        </button>
                     </div>
 
                     {% if lectures %}
@@ -42,10 +38,10 @@
                     {% else %}
                         <p>No lectures scheduled yet.</p>
                     {% endif %}
-                    
-                    <p class="text-center mt-3">
-                        <a href="{% url 'teacher:teacher_dashboard' %}">Back to Dashboard</a>
-                    </p>
+                        <button class="btn btn-primary btn-sm me-2" type="button" data-bs-toggle="collapse" data-bs-target="#pruneCard" aria-expanded="false" aria-controls="pruneCard">
+                            Delete old lectures
+                        </button>
+                        <a href="{% url 'teacher:teacher_dashboard' %}" class="btn btn-primary btn-sm">Back to Dashboard</a>
                 </div>
             </div>
 
