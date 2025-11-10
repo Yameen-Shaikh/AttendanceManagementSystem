@@ -3,8 +3,7 @@ from django.db import models
 from django.conf import settings
 
 class Course(models.Model):
-    name = models.CharField(max_length=255)
-    teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='courses')
+    name = models.CharField(max_length=255, unique=True)
 
     def __str__(self):
         return self.name
@@ -12,15 +11,21 @@ class Course(models.Model):
 class Class(models.Model):
     name = models.CharField(max_length=255) # e.g., "First Year"
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='classes')
-    teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='classes_taught', limit_choices_to={'role': 'Teacher'})
     students = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='enrolled_classes', limit_choices_to={'role': 'Student'})
-    subject = models.CharField(max_length=255, blank=True, null=True) # New field
 
     class Meta:
         verbose_name_plural = "Classes" # Fixes admin display name
 
     def __str__(self):
-        return f"{self.course.name} - {self.name} ({self.subject})" # Updated __str__
+        return f"{self.course.name} - {self.name}"
+
+class Subject(models.Model):
+    name = models.CharField(max_length=255)
+    class_obj = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='subjects')
+    teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='subjects_taught', limit_choices_to={'role': 'Teacher'})
+
+    def __str__(self):
+        return f"{self.name} ({self.class_obj})"
 
 
 class Lecture(models.Model):

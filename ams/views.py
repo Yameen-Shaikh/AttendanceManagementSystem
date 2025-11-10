@@ -20,7 +20,7 @@ def login_view(request):
         user = authenticate(request, username=email, password=password)
         if user is not None:
             if not user.is_active:
-                messages.error(request, 'Invalid username or password.')
+                messages.error(request, 'Invalid username or password/Approval pending.')
                 return redirect('login')
             login(request, user)
             if user.role == 'Teacher':

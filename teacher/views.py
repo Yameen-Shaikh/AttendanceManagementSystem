@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from datetime import timedelta
-from .models import Course, Class, QRCode, Attendance, Lecture
+from .models import Course, Class, QRCode, Attendance, Lecture, Subject
 from student.models import CustomUser
 from django.http import JsonResponse, HttpResponseForbidden
 from django.core.exceptions import PermissionDenied
@@ -17,64 +17,66 @@ def teacher_dashboard(request):
     if request.user.role != 'Teacher':
         raise PermissionDenied
     
-    courses = Course.objects.filter(teacher=request.user)
-    courses_with_classes = {}
-    for course in courses:
-        classes = Class.objects.filter(course=course)
-        courses_with_classes[course] = list(classes)
+    subjects = Subject.objects.filter(teacher=request.user).select_related('class_obj__course')
+    
+    courses_data = {}
+    for subject in subjects:
+        course = subject.class_obj.course
+        if course not in courses_data:
+            courses_data[course] = {}
+        
+        class_obj = subject.class_obj
+        if class_obj not in courses_data[course]:
+            courses_data[course][class_obj] = []
+            
+        courses_data[course][class_obj].append(subject)
 
     context = {
-        'courses_with_classes': courses_with_classes,
-        'subjects': request.user.subjects
+        'courses_data': courses_data,
     }
     return render(request, 'teacher/teacher_dashboard.html', context)
 
 @login_required
-def create_course_view(request):
+def select_class_view(request):
     if request.user.role != 'Teacher':
         raise PermissionDenied
 
-    if request.method == 'POST':
-        course_name = request.POST.get('name')
-        if course_name:
-            Course.objects.create(name=course_name, teacher=request.user)
-            messages.success(request, f'Course "{course_name}" created successfully.')
-            return redirect('teacher:teacher_dashboard')
-        else:
-            messages.error(request, 'Course name cannot be empty.')
-    
-    return render(request, 'teacher/create_course.html')
-
-@login_required
-def create_class_view(request, course_id):
-    course = get_object_or_404(Course, pk=course_id)
-
-    if request.user.role != 'Teacher':
-        return HttpResponseForbidden("You are not authorized to create a class.")
-
-    if request.method == 'POST':
-        class_name = request.POST.get('name')
-        subject = request.POST.get('subject') # Get subject from form
-        if class_name:
-            if Class.objects.filter(course=course, name=class_name).exists():
-                messages.error(request, f'A class named "{class_name}" already exists for this course.')
-            else:
-                Class.objects.create(name=class_name, course=course, teacher=request.user, subject=subject) # Save subject
-                messages.success(request, f'Class "{class_name}" created successfully for {course.name}.')
-                return redirect('teacher:teacher_dashboard')
-        else:
-            messages.error(request, 'Class name cannot be empty.')
+    courses = Course.objects.prefetch_related('classes').all()
     
     context = {
-        'course': course
+        'courses': courses,
     }
-    return render(request, 'teacher/create_class.html', context)
+    return render(request, 'teacher/select_class.html', context)
+
+@login_required
+def create_subject_view(request, class_id):
+    if request.user.role != 'Teacher':
+        raise PermissionDenied
+        
+    class_obj = get_object_or_404(Class, pk=class_id)
+    
+    if request.method == 'POST':
+        subject_name = request.POST.get('name')
+        if subject_name:
+            Subject.objects.create(name=subject_name, class_obj=class_obj, teacher=request.user)
+            messages.success(request, f'Subject "{subject_name}" created for {class_obj.name}.')
+            return redirect('teacher:teacher_dashboard')
+        else:
+            messages.error(request, 'Subject name cannot be empty.')
+            
+    context = {
+        'class_obj': class_obj,
+    }
+    return render(request, 'teacher/create_subject.html', context)
 
 @login_required
 def generate_qr_code(request, lecture_id):
     lecture = get_object_or_404(Lecture, pk=lecture_id)
     
-    if request.user.role != 'Teacher' or request.user != lecture.class_obj.teacher:
+    # This check needs to be updated since teacher is not directly on class_obj
+    # We can check if the teacher teaches any subject in this class
+    subjects_in_class = Subject.objects.filter(class_obj=lecture.class_obj, teacher=request.user)
+    if request.user.role != 'Teacher' or not subjects_in_class.exists():
         return HttpResponseForbidden("You are not authorized to generate a QR code for this lecture.")
 
     # Check for an existing active QR code for this lecture
@@ -100,7 +102,9 @@ def generate_qr_code(request, lecture_id):
 @login_required
 def view_report(request, class_id):
     class_obj = get_object_or_404(Class, pk=class_id)
-    if request.user.role != 'Teacher' or request.user != class_obj.teacher:
+    # This check needs to be updated
+    subjects_in_class = Subject.objects.filter(class_obj=class_obj, teacher=request.user)
+    if request.user.role != 'Teacher' or not subjects_in_class.exists():
         return HttpResponseForbidden("You are not authorized to view this report for this class.")
 
     students = class_obj.students.all()
@@ -160,66 +164,11 @@ def profile(request):
     return render(request, 'teacher/profile.html')
 
 @login_required
-def update_course_view(request, course_id):
-    course = get_object_or_404(Course, pk=course_id, teacher=request.user)
-    if request.user.role != 'Teacher':
-        raise PermissionDenied
-
-    if request.method == 'POST':
-        course.name = request.POST.get('name')
-        course.save()
-        messages.success(request, 'Course updated successfully.')
-        return redirect('teacher:teacher_dashboard')
-    
-    context = {
-        'course': course
-    }
-    return render(request, 'teacher/update_course.html', context)
-
-@login_required
-@require_POST
-def delete_course_view(request, course_id):
-    course = get_object_or_404(Course, pk=course_id, teacher=request.user)
-    if request.user.role != 'Teacher':
-        raise PermissionDenied
-    
-    course.delete()
-    messages.success(request, 'Course deleted successfully.')
-    return redirect('teacher:teacher_dashboard')
-
-@login_required
-def update_class_view(request, class_id):
-    class_obj = get_object_or_404(Class, pk=class_id, teacher=request.user)
-    if request.user.role != 'Teacher':
-        raise PermissionDenied
-
-    if request.method == 'POST':
-        class_obj.name = request.POST.get('name')
-        class_obj.subject = request.POST.get('subject')
-        class_obj.save()
-        messages.success(request, 'Class updated successfully.')
-        return redirect('teacher:teacher_dashboard')
-    
-    context = {
-        'class_obj': class_obj
-    }
-    return render(request, 'teacher/update_class.html', context)
-
-@login_required
-@require_POST
-def delete_class_view(request, class_id):
-    class_obj = get_object_or_404(Class, pk=class_id, teacher=request.user)
-    if request.user.role != 'Teacher':
-        raise PermissionDenied
-    
-    class_obj.delete()
-    messages.success(request, 'Class deleted successfully.')
-    return redirect('teacher:teacher_dashboard')
-
-@login_required
 def schedule_lecture_view(request, class_id):
-    class_obj = get_object_or_404(Class, pk=class_id, teacher=request.user)
-    if request.user.role != 'Teacher':
+    class_obj = get_object_or_404(Class, pk=class_id)
+    # This check needs to be updated
+    subjects_in_class = Subject.objects.filter(class_obj=class_obj, teacher=request.user)
+    if request.user.role != 'Teacher' or not subjects_in_class.exists():
         raise PermissionDenied
 
     if request.method == 'POST':
@@ -240,8 +189,10 @@ def schedule_lecture_view(request, class_id):
 
 @login_required
 def view_lectures(request, class_id):
-    class_obj = get_object_or_404(Class, pk=class_id, teacher=request.user)
-    if request.user.role != 'Teacher':
+    class_obj = get_object_or_404(Class, pk=class_id)
+    # This check needs to be updated
+    subjects_in_class = Subject.objects.filter(class_obj=class_obj, teacher=request.user)
+    if request.user.role != 'Teacher' or not subjects_in_class.exists():
         raise PermissionDenied
     
     lectures = Lecture.objects.filter(class_obj=class_obj).order_by('-date', '-time')
@@ -269,10 +220,11 @@ def prune_lectures_view(request):
 
     # We should only prune lectures for the classes taught by the current teacher
     # to prevent one teacher from deleting another's data.
+    # This logic needs to be updated
     old_lectures = Lecture.objects.filter(
-        class_obj__teacher=request.user,
+        class_obj__subjects__teacher=request.user,
         date__lt=cutoff_date
-    )
+    ).distinct()
     
     count = old_lectures.count()
 
@@ -288,9 +240,10 @@ def prune_lectures_view(request):
 @login_required
 def get_attendance_data(request, class_id):
     # 1. Validate user and class
-    try:
-        class_obj = Class.objects.get(pk=class_id, teacher=request.user)
-    except Class.DoesNotExist:
+    # This check needs to be updated
+    class_obj = get_object_or_404(Class, pk=class_id)
+    subjects_in_class = Subject.objects.filter(class_obj=class_obj, teacher=request.user)
+    if request.user.role != 'Teacher' or not subjects_in_class.exists():
         return JsonResponse({'error': 'Class not found or you do not have permission to view it.'}, status=404)
 
     # 2. Get all lectures for the class
@@ -320,13 +273,20 @@ def reports_view(request):
     if request.user.role != 'Teacher':
         raise PermissionDenied
     
-    courses = Course.objects.filter(teacher=request.user)
-    courses_with_classes = {}
-    for course in courses:
-        classes = Class.objects.filter(course=course)
-        courses_with_classes[course] = list(classes)
+    # This needs to be updated
+    subjects = Subject.objects.filter(teacher=request.user).select_related('class_obj__course')
+    
+    courses_data = {}
+    for subject in subjects:
+        course = subject.class_obj.course
+        if course not in courses_data:
+            courses_data[course] = []
+        
+        # Avoid adding duplicate classes
+        if not any(d.id == subject.class_obj.id for d in courses_data[course]):
+             courses_data[course].append(subject.class_obj)
 
     context = {
-        'courses_with_classes': courses_with_classes,
+        'courses_with_classes': courses_data,
     }
     return render(request, 'teacher/reports.html', context)
