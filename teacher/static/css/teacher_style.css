@@ -61,8 +61,10 @@ p {
 .gradient-title {
     color: #333;
     font-weight: 700;
-    text-shadow: 1px 1px 0px #fff,
-                 2px 2px 5px rgba(0, 0, 0, 0.2);
+    text-shadow: -1px -1px 0 #fff,  
+                  1px -1px 0 #fff,
+                 -1px  1px 0 #fff,
+                  1px  1px 0 #fff;
 }
 
 .card {

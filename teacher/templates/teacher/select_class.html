@@ -3,31 +3,87 @@
 {% block title %}Select Class{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <h2 class="text-center my-4 gradient-title">Select a Class to Add a Subject</h2>
+<div class="d-flex align-items-center justify-content-center" style="min-height: calc(100vh - 120px);">
+    <div style="max-width: 600px; width: 100%;">
+        <style>
+        .container {
+            background: none !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+        </style>
+        <div class="container-fluid mt-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="text-center my-4 gradient-title">Select a Class to Add a Subject</h2>
 
-    {% for course in courses %}
-    <div class="course-card-item">
-        <div class="card shadow-sm">
-            <div class="card-header">
-                <h4 class="mb-0">{{ course.name }}</h4>
-            </div>
-            <div class="card-body">
-                {% if course.classes.all %}
-                <ul class="list-group list-group-flush">
-                    {% for class_obj in course.classes.all %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>{{ class_obj.name }}</span>
-                        <a href="{% url 'teacher:create_subject' class_obj.id %}" class="btn btn-primary">Add Subject</a>
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <p class="card-text">No classes have been created for this course yet.</p>
-                {% endif %}
+                    <form id="select-class-form">
+                        <div class="mb-3">
+                            <label for="course-select" class="form-label">Course</label>
+                            <select id="course-select" class="form-select">
+                                <option selected disabled>Select a course</option>
+                                {% for course in courses %}
+                                    <option value="{{ course.id }}">{{ course.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="class-select" class="form-label">Class</label>
+                            <select id="class-select" class="form-select" disabled>
+                                <option selected disabled>Select a class</option>
+                            </select>
+                        </div>
+
+                        <a href="#" id="add-subject-btn" class="btn btn-primary disabled">Add Subject</a>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-    {% endfor %}
 </div>
+
+<script>
+document.getElementById('course-select').addEventListener('change', function() {
+    const courseId = this.value;
+    const classSelect = document.getElementById('class-select');
+    const addSubjectBtn = document.getElementById('add-subject-btn');
+
+    classSelect.innerHTML = '<option selected disabled>Loading...</option>';
+    classSelect.disabled = false;
+    addSubjectBtn.classList.add('disabled');
+    addSubjectBtn.href = '#';
+
+    fetch(`/teacher/get-classes/${courseId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.classes.length > 0) {
+                classSelect.innerHTML = '<option selected disabled>Select a class</option>';
+                data.classes.forEach(class_ => {
+                    const option = document.createElement('option');
+                    option.value = class_.id;
+                    option.textContent = class_.name;
+                    classSelect.appendChild(option);
+                });
+            } else {
+                classSelect.innerHTML = '<option selected disabled>No class yet</option>';
+                addSubjectBtn.classList.add('disabled');
+                addSubjectBtn.href = '#';
+            }
+        });
+});
+
+document.getElementById('class-select').addEventListener('change', function() {
+    const classId = this.value;
+    const addSubjectBtn = document.getElementById('add-subject-btn');
+
+    if (classId) {
+        addSubjectBtn.classList.remove('disabled');
+        addSubjectBtn.href = `/teacher/class/${classId}/create-subject/`;
+    } else {
+        addSubjectBtn.classList.add('disabled');
+        addSubjectBtn.href = '#';
+    }
+});
+</script>
 {% endblock %}

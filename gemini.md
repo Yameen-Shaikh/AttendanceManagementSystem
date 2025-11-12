@@ -277,3 +277,55 @@ To enable accurate tracking of missed attendance, a new `Lecture` model was intr
     - Standardized button styles across the teacher dashboard, schedule lecture, and view lectures pages to use the `btn-primary` class for a consistent look and feel.
 - **Navigation:**
     - Removed the "View Report" button from the teacher dashboard to streamline the UI.
+
+## 17. Course and Class Management Refactor
+
+-   **Refactored Course, Class, and Subject Management:**
+    -   Moved the responsibility of creating and managing `Courses` and `Classes` from teachers to administrators to ensure data consistency.
+    -   Removed the ability for teachers to create, update, or delete courses and classes.
+    -   Introduced a new `Subject` model to link teachers to the classes they teach. A teacher now creates subjects for a specific class.
+    -   Updated the database schema with a new migration to reflect these changes.
+-   **New Teacher Workflow:**
+    -   Created a "Select Class" page where teachers can browse all available courses and classes.
+    -   From the "Select Class" page, teachers can add subjects to the classes they teach.
+    -   The teacher dashboard has been updated to display the subjects taught by the teacher, grouped by course and class.
+-   **Admin Panel Enhancements:**
+    -   The `Class` creation form in the admin panel now only shows `name` and `course` fields.
+    -   Added placeholders to input fields in the admin panel for `Course`, `Class`, `Subject`, and `CustomUser` models to improve usability.
+-   **Improved Login Experience:**
+    -   The login error message for teachers pending approval has been updated to "Invalid username or password/Approval pending." for better clarity.
+
+## 18. Teacher Dashboard and UI Refinements
+
+-   **Teacher Dashboard Layout Refinement:**
+    -   The "My Subjects" title is now centered within the card header.
+    -   Nested cards for individual classes within courses have been removed, simplifying the layout. Class names and their subjects are now displayed directly within the main card body.
+    -   The "Add Subject" button has been moved from the `card-footer` to the `card-body`, is now centered, and has a top margin for better visual separation.
+    -   The overall width of the main dashboard card has been increased for better content fit.
+-   **Select Class Page:**
+    -   The entire content of the "Select Class" page is now placed within a card, creating a more consistent and visually appealing layout.
+    -   Removed an unnecessary inline style block from the template.
+-   **Styling:**
+    -   Removed the `text-shadow` from the `.gradient-title` class in `teacher_style.css`.
+
+## 19. Subject-Specific Lecture Management
+
+To allow teachers to differentiate lectures by subject and generate QR codes for specific subjects, the lecture management system has been significantly updated:
+
+-   **`Lecture` Model Update:**
+    -   The `Lecture` model (`teacher/models.py`) now links directly to a `Subject` instead of a `Class`. This change was implemented with a database migration. The `subject` field is currently nullable to facilitate data migration, but it is intended to be non-nullable in the future.
+-   **Updated Views (`teacher/views.py`):**
+    -   `schedule_lecture_view`: Modified to accept `subject_id` instead of `class_id`, ensuring lectures are scheduled for specific subjects.
+    -   `view_lectures`: Modified to accept `subject_id`, allowing teachers to view lectures for a particular subject.
+    -   `prune_lectures_view`: Updated the filtering logic to prune lectures based on the `subject` taught by the current teacher.
+    -   `generate_qr_code`: The permission check now verifies if the teacher teaches the `subject` associated with the lecture.
+    -   `get_attendance_data`: Modified to accept `subject_id`, providing attendance data specific to a subject.
+    -   `view_report`: Modified to accept `subject_id`, generating attendance reports for a specific subject.
+    -   `reports_view`: Updated to correctly populate the context for the `reports.html` template, ensuring subjects are available for each class.
+-   **Updated URL Patterns (`teacher/urls.py`):**
+    -   URL patterns for `schedule_lecture`, `view_lectures`, `get_attendance_data`, and `view_report` were updated to use `subject_id` in their paths.
+-   **Updated Templates:**
+    -   `teacher/templates/teacher/schedule_lecture.html`: Modified to display the subject name and its associated class name.
+    -   `teacher/templates/teacher/view_lectures.html`: Modified to display the subject name and its associated class name.
+    -   `teacher/templates/teacher/teacher_dashboard.html`: The "Schedule Lecture" and "View Lectures" buttons now correctly pass `subject.id` and display the subject name for clarity.
+    -   `teacher/templates/teacher/reports.html`: Updated to use a "Select Subject" dropdown and pass `subject.id` to the `get_attendance_data` function for subject-specific attendance charts.

@@ -29,13 +29,13 @@ class Subject(models.Model):
 
 
 class Lecture(models.Model):
-    class_obj = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='lectures')
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='lectures')
     date = models.DateField()
     time = models.TimeField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Lecture for {self.class_obj.name} on {self.date} at {self.time}"
+        return f"Lecture for {self.subject.name} ({self.subject.class_obj.name}) on {self.date} at {self.time}"
 
 
 class Attendance(models.Model):

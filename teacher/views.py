@@ -73,10 +73,8 @@ def create_subject_view(request, class_id):
 def generate_qr_code(request, lecture_id):
     lecture = get_object_or_404(Lecture, pk=lecture_id)
     
-    # This check needs to be updated since teacher is not directly on class_obj
-    # We can check if the teacher teaches any subject in this class
-    subjects_in_class = Subject.objects.filter(class_obj=lecture.class_obj, teacher=request.user)
-    if request.user.role != 'Teacher' or not subjects_in_class.exists():
+    # Permission check: ensure the teacher teaches the subject associated with this lecture
+    if request.user.role != 'Teacher' or lecture.subject.teacher != request.user:
         return HttpResponseForbidden("You are not authorized to generate a QR code for this lecture.")
 
     # Check for an existing active QR code for this lecture
@@ -100,22 +98,22 @@ def generate_qr_code(request, lecture_id):
     return render(request, 'teacher/generate_qr.html', context)
 
 @login_required
-def view_report(request, class_id):
-    class_obj = get_object_or_404(Class, pk=class_id)
-    # This check needs to be updated
-    subjects_in_class = Subject.objects.filter(class_obj=class_obj, teacher=request.user)
-    if request.user.role != 'Teacher' or not subjects_in_class.exists():
-        return HttpResponseForbidden("You are not authorized to view this report for this class.")
+def view_report(request, subject_id): # Changed from class_id
+    subject = get_object_or_404(Subject, pk=subject_id)
+    
+    # Permission check: ensure the teacher teaches this subject
+    if request.user.role != 'Teacher' or subject.teacher != request.user:
+        return HttpResponseForbidden("You are not authorized to view this report for this subject.")
 
-    students = class_obj.students.all()
+    students = subject.class_obj.students.all() # Students enrolled in the class of the subject
     total_students = students.count()
-    total_lectures = Lecture.objects.filter(class_obj=class_obj).count()
+    total_lectures = Lecture.objects.filter(subject=subject).count() # Filter by subject
 
     student_reports = []
     total_attendance_sum = 0
 
     for student in students:
-        attended_lectures = Attendance.objects.filter(lecture__class_obj=class_obj, student=student).count()
+        attended_lectures = Attendance.objects.filter(lecture__subject=subject, student=student).count() # Filter by subject
         attendance_percentage = (attended_lectures / total_lectures) * 100 if total_lectures > 0 else 0
         total_attendance_sum += attendance_percentage
         student_reports.append({
@@ -128,8 +126,9 @@ def view_report(request, class_id):
     average_attendance = round(total_attendance_sum / total_students) if total_students > 0 else 0
 
     context = {
-        'course': class_obj.course,
-        'class_obj': class_obj,
+        'course': subject.class_obj.course, # Use subject's class's course
+        'class_obj': subject.class_obj, # Use subject's class
+        'subject': subject, # Pass subject to template
         'total_students': total_students,
         'average_attendance': average_attendance,
         'student_reports': student_reports,
@@ -164,41 +163,41 @@ def profile(request):
     return render(request, 'teacher/profile.html')
 
 @login_required
-def schedule_lecture_view(request, class_id):
-    class_obj = get_object_or_404(Class, pk=class_id)
-    # This check needs to be updated
-    subjects_in_class = Subject.objects.filter(class_obj=class_obj, teacher=request.user)
-    if request.user.role != 'Teacher' or not subjects_in_class.exists():
+def schedule_lecture_view(request, subject_id): # Changed from class_id
+    subject = get_object_or_404(Subject, pk=subject_id) # Get Subject object
+    
+    # Permission check: ensure the teacher teaches this subject
+    if request.user.role != 'Teacher' or subject.teacher != request.user:
         raise PermissionDenied
 
     if request.method == 'POST':
         date = request.POST.get('date')
         time = request.POST.get('time')
         if date and time:
-            Lecture.objects.create(class_obj=class_obj, date=date, time=time)
-            messages.success(request, f'Lecture scheduled successfully for {class_obj.name}.')
+            Lecture.objects.create(subject=subject, date=date, time=time) # Use subject
+            messages.success(request, f'Lecture scheduled successfully for {subject.name} in {subject.class_obj.name}.')
             return redirect('teacher:teacher_dashboard') # Or maybe to a lecture list view
         else:
             messages.error(request, 'Date and time cannot be empty.')
 
     context = {
-        'class_obj': class_obj
+        'subject': subject # Pass subject to template
     }
     return render(request, 'teacher/schedule_lecture.html', context)
 
 
 @login_required
-def view_lectures(request, class_id):
-    class_obj = get_object_or_404(Class, pk=class_id)
-    # This check needs to be updated
-    subjects_in_class = Subject.objects.filter(class_obj=class_obj, teacher=request.user)
-    if request.user.role != 'Teacher' or not subjects_in_class.exists():
+def view_lectures(request, subject_id): # Changed from class_id
+    subject = get_object_or_404(Subject, pk=subject_id) # Get Subject object
+    
+    # Permission check: ensure the teacher teaches this subject
+    if request.user.role != 'Teacher' or subject.teacher != request.user:
         raise PermissionDenied
     
-    lectures = Lecture.objects.filter(class_obj=class_obj).order_by('-date', '-time')
+    lectures = Lecture.objects.filter(subject=subject).order_by('-date', '-time') # Filter by subject
     
     context = {
-        'class_obj': class_obj,
+        'subject': subject, # Pass subject to template
         'lectures': lectures
     }
     return render(request, 'teacher/view_lectures.html', context)
@@ -218,11 +217,9 @@ def prune_lectures_view(request):
 
     cutoff_date = timezone.now() - timedelta(days=days_to_keep)
 
-    # We should only prune lectures for the classes taught by the current teacher
-    # to prevent one teacher from deleting another's data.
-    # This logic needs to be updated
+    # We should only prune lectures for the subjects taught by the current teacher
     old_lectures = Lecture.objects.filter(
-        class_obj__subjects__teacher=request.user,
+        subject__teacher=request.user, # Changed from class_obj__subjects__teacher
         date__lt=cutoff_date
     ).distinct()
     
@@ -238,19 +235,17 @@ def prune_lectures_view(request):
     return redirect(request.META.get('HTTP_REFERER', 'teacher:teacher_dashboard'))
 
 @login_required
-def get_attendance_data(request, class_id):
-    # 1. Validate user and class
-    # This check needs to be updated
-    class_obj = get_object_or_404(Class, pk=class_id)
-    subjects_in_class = Subject.objects.filter(class_obj=class_obj, teacher=request.user)
-    if request.user.role != 'Teacher' or not subjects_in_class.exists():
-        return JsonResponse({'error': 'Class not found or you do not have permission to view it.'}, status=404)
+def get_attendance_data(request, subject_id): # Changed from class_id
+    # 1. Validate user and subject
+    subject = get_object_or_404(Subject, pk=subject_id)
+    if request.user.role != 'Teacher' or subject.teacher != request.user:
+        return JsonResponse({'error': 'Subject not found or you do not have permission to view it.'}, status=404)
 
-    # 2. Get all lectures for the class
-    lectures = Lecture.objects.filter(class_obj=class_obj).order_by('date', 'time')
+    # 2. Get all lectures for the subject
+    lectures = Lecture.objects.filter(subject=subject).order_by('date', 'time')
 
-    # 3. Get total number of students in the class
-    total_students = class_obj.students.count()
+    # 3. Get total number of students in the class associated with the subject
+    total_students = subject.class_obj.students.count()
 
     # 4. Calculate attendance percentage for each lecture
     attendance_data = []
@@ -273,20 +268,32 @@ def reports_view(request):
     if request.user.role != 'Teacher':
         raise PermissionDenied
     
-    # This needs to be updated
-    subjects = Subject.objects.filter(teacher=request.user).select_related('class_obj__course')
+    # Get all subjects taught by the current teacher, prefetch related class and course
+    subjects_taught = Subject.objects.filter(teacher=request.user).select_related('class_obj__course')
     
     courses_data = {}
-    for subject in subjects:
+    for subject in subjects_taught:
         course = subject.class_obj.course
+        class_obj = subject.class_obj
+        
         if course not in courses_data:
             courses_data[course] = []
         
-        # Avoid adding duplicate classes
-        if not any(d.id == subject.class_obj.id for d in courses_data[course]):
-             courses_data[course].append(subject.class_obj)
+        # Add class_obj to the list if not already present
+        if class_obj not in courses_data[course]:
+            courses_data[course].append(class_obj)
+            # Ensure subjects are prefetched for this class_obj
+            class_obj.subjects_all = Subject.objects.filter(class_obj=class_obj, teacher=request.user)
 
     context = {
         'courses_with_classes': courses_data,
     }
     return render(request, 'teacher/reports.html', context)
+
+@login_required
+def get_classes(request, course_id):
+    if request.user.role != 'Teacher':
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    
+    classes = Class.objects.filter(course_id=course_id).values('id', 'name')
+    return JsonResponse({'classes': list(classes)})
