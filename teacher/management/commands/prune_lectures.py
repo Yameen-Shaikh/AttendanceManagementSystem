@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand, CommandParser
 from django.utils import timezone
 from datetime import timedelta
-from teacher.models import Lecture
+from teacher.models import Lecture, Attendance
 
 class Command(BaseCommand):
     help = 'Deletes lecture records older than a specified number of days.'
@@ -29,7 +29,15 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS('No old lectures found to delete.'))
             return
 
-        # Deleting the lectures will also delete associated attendance and QR codes due to `on_delete=models.CASCADE`
+        # Before deleting lectures, preserve attendance data by setting subject and date
+        for lecture in old_lectures:
+            Attendance.objects.filter(lecture=lecture).update(
+                subject=lecture.subject,
+                date=lecture.date
+            )
+
+        # Deleting the lectures will now set lecture to NULL on attendances due to `on_delete=models.SET_NULL`
+        # QR codes will be deleted due to `on_delete=models.CASCADE`
         old_lectures.delete()
 
         self.stdout.write(self.style.SUCCESS(f'Successfully deleted {count} old lecture record(s).'))

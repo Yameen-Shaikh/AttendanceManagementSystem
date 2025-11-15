@@ -13,33 +13,33 @@
         }
         </style>
         <div class="container-fluid mt-4">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h2 class="text-center my-4 gradient-title">Select a Class to Add a Subject</h2>
+            <div class="card">
+        <div class="card-body">
+            <h2 class="text-center my-4 gradient-title">Select a Class to Add a Subject</h2>
 
-                    <form id="select-class-form">
-                        <div class="mb-3">
-                            <label for="course-select" class="form-label">Course</label>
-                            <select id="course-select" class="form-select">
-                                <option selected disabled>Select a course</option>
-                                {% for course in courses %}
-                                    <option value="{{ course.id }}">{{ course.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="class-select" class="form-label">Class</label>
-                            <select id="class-select" class="form-select" disabled>
-                                <option selected disabled>Select a class</option>
-                            </select>
-                        </div>
-
-                        <a href="#" id="add-subject-btn" class="btn btn-primary disabled">Add Subject</a>
-                    </form>
+            <form id="select-class-form">
+                <div class="mb-3">
+                    <label for="course-select" class="form-label">Course</label>
+                    <select id="course-select" class="form-select">
+                        <option selected disabled>Select a course</option>
+                        {% for course in courses %}
+                            <option value="{{ course.id }}">{{ course.name }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
-            </div>
+
+                <div class="mb-3">
+                    <label for="class-select" class="form-label">Class</label>
+                    <select id="class-select" class="form-select" disabled>
+                        <option selected disabled>Select a class</option>
+                    </select>
+                </div>
+
+                <a href="#" id="add-subject-btn" class="btn btn-primary disabled">Add Subject</a>
+            </form>
         </div>
+    </div>
+</div>
     </div>
 </div>
 

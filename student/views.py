@@ -33,7 +33,7 @@ def get_attendance_calendar_data(request):
     student = request.user
     enrolled_classes = student.enrolled_classes.all()
     lectures = Lecture.objects.filter(
-        class_obj__in=enrolled_classes,
+        subject__class_obj__in=enrolled_classes,
         date__range=[start_date, end_date]
     )
 
@@ -80,7 +80,8 @@ def mark_attendance(request):
         if not lecture:
             return JsonResponse({'success': False, 'message': 'This QR code is not linked to a lecture.'})
             
-        class_obj = lecture.class_obj
+        class_obj = lecture.subject.class_obj
+        subject_name = lecture.subject.name
         
         # Check if the student is enrolled in the class
         if student not in class_obj.students.all():
@@ -89,7 +90,12 @@ def mark_attendance(request):
         if Attendance.objects.filter(student=student, lecture=lecture).exists():
             return JsonResponse({'success': False, 'message': 'Attendance already marked for this lecture.'})
 
-        Attendance.objects.create(student=student, lecture=lecture)
+        Attendance.objects.create(
+            student=student,
+            lecture=lecture,
+            subject=lecture.subject,
+            date=lecture.date
+        )
 
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
@@ -100,7 +106,7 @@ def mark_attendance(request):
             }
         )
 
-        return JsonResponse({'success': True, 'message': f'Attendance marked successfully for {class_obj.subject}.'})
+        return JsonResponse({'success': True, 'message': f'Attendance marked successfully for {subject_name}.'})
 
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'message': 'Invalid JSON data.'})
@@ -146,8 +152,8 @@ def student_dashboard(request):
     enrollments = []
     if enrolled_classes.exists():
         for class_obj in enrolled_classes:
-            total_lectures = Lecture.objects.filter(class_obj=class_obj).count()
-            attended_lectures = Attendance.objects.filter(lecture__class_obj=class_obj, student=request.user).count()
+            total_lectures = Lecture.objects.filter(subject__class_obj=class_obj).count()
+            attended_lectures = Attendance.objects.filter(lecture__subject__class_obj=class_obj, student=request.user).count()
             attendance_percentage = (attended_lectures / total_lectures) * 100 if total_lectures > 0 else 0
             enrollments.append({
                 'class_obj': class_obj,
@@ -225,7 +231,7 @@ def get_attendance_by_date(request):
     student = request.user
     enrolled_classes = student.enrolled_classes.all()
     lectures = Lecture.objects.filter(
-        class_obj__in=enrolled_classes,
+        subject__class_obj__in=enrolled_classes,
         date=date
     )
 
@@ -238,7 +244,7 @@ def get_attendance_by_date(request):
     for lecture in lectures:
         is_present = lecture.id in attended_lectures
         data.append({
-            'subject': lecture.class_obj.subject,
+            'subject': lecture.subject.name,
             'status': 'Present' if is_present else 'Absent'
         })
 
@@ -274,7 +280,7 @@ def get_attendance_data(request):
     enrolled_classes = student.enrolled_classes.all()
     
     # Get all lectures for the enrolled classes
-    lectures = Lecture.objects.filter(class_obj__in=enrolled_classes).order_by('date').values('id', 'date', 'class_obj__subject')
+    lectures = Lecture.objects.filter(subject__class_obj__in=enrolled_classes).order_by('date').values('id', 'date', 'subject__name')
     
     # Get all attendance records for the student
     attended_lecture_ids = set(Attendance.objects.filter(student=student).values_list('lecture_id', flat=True))
@@ -284,7 +290,7 @@ def get_attendance_data(request):
     datasets = {}
 
     for lecture in lectures:
-        subject = lecture['class_obj__subject']
+        subject = lecture['subject__name']
         if subject not in datasets:
             datasets[subject] = {
                 'label': subject,

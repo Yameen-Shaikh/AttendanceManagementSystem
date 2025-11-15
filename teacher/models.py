@@ -40,11 +40,14 @@ class Lecture(models.Model):
 
 class Attendance(models.Model):
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    lecture = models.ForeignKey(Lecture, on_delete=models.CASCADE, related_name='attendances', null=True, blank=True)
+    lecture = models.ForeignKey(Lecture, on_delete=models.SET_NULL, related_name='attendances', null=True, blank=True)
+    subject = models.ForeignKey(Subject, on_delete=models.SET_NULL, null=True, blank=True)
+    date = models.DateField(null=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.student.name} - {self.lecture}"
+        lecture_info = self.lecture if self.lecture else f"{self.subject.name if self.subject else 'Unknown'} on {self.date}"
+        return f"{self.student.name} - {lecture_info}"
 
 
 class QRCode(models.Model):

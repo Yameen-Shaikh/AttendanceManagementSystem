@@ -207,39 +207,20 @@ input[type="password"],
     min-height: calc(100vh - 100px); /* Adjust based on navbar height */
 }
 
-.card {
-    background:#fff6e7;
+.card, .login-card, .dashboard-card {
+    background: #fff6e7;
     padding: 25px;
     border-radius: 20px;
     box-shadow: 0 0 15px rgba(237, 159, 98, 0.5);
     text-align: center;
     width: 100%; /* Changed from 400px to be responsive */
     border: none;
+    transition: all 0.3s ease;
 }
 
-.login-card {
-    /* width: 400px; */ /* Removed fixed width to allow responsiveness within grid */
-    box-shadow: 0 0 15px rgba(237, 159, 98,.5);
-}
-
-.dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    margin-top: 30px;
-}
-
-.dashboard-card {
-    background: #F4F7FB;
-    padding: 20px;
-    border-radius: 15px;
-    box-shadow: -5px -5px 10px rgba(255, 255, 255, 0.7), 5px 5px 10px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    transition: transform 0.3s ease;
-}
-
-.dashboard-card:hover {
+.card:hover, .login-card:hover, .dashboard-card:hover {
     transform: translateY(-5px);
+    box-shadow: 0 0 25px rgba(237, 159, 98, 0.8);
 }
 
 .dashboard-card h3 {

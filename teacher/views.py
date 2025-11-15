@@ -1,3 +1,4 @@
+import uuid
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
@@ -88,7 +89,13 @@ def generate_qr_code(request, lecture_id):
     else:
         # If no active QR code, create a new one
         expires_at = timezone.now() + timedelta(minutes=2)
-        qr_code = QRCode.objects.create(lecture=lecture, expires_at=expires_at)
+        # Explicitly generate a UUID for qr_code_data
+        new_qr_code_data = str(uuid.uuid4()) 
+        qr_code = QRCode.objects.create(
+            lecture=lecture, 
+            qr_code_data=new_qr_code_data, # Assign the generated UUID
+            expires_at=expires_at
+        )
     
     context = {
         'lecture': lecture,
@@ -221,7 +228,7 @@ def prune_lectures_view(request):
     old_lectures = Lecture.objects.filter(
         subject__teacher=request.user, # Changed from class_obj__subjects__teacher
         date__lt=cutoff_date
-    ).distinct()
+    )
     
     count = old_lectures.count()
 

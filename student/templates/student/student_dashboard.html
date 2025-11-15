@@ -13,7 +13,6 @@
                             <h2 class="h4 course-title">{{ enrollment.class_obj.course.name }}</h2>
                             <hr style="border-color: rgba(255, 255, 255, 0.3);">
                             <p class="mb-2">Class: <strong>{{ enrollment.class_obj.name }}</strong></p>
-                            <p class="mb-2">Subject: <strong>{{ enrollment.class_obj.subject }}</strong></p>
                             <p class="mb-2">Attendance: <strong>{{ enrollment.attendance_percentage }}%</strong></p>
                             <a href="{% url 'student:unenroll' enrollment.class_obj.id %}" class="btn-grad mt-3" onclick="return confirm('Are you sure you want to unenroll from this course?');">Unenroll</a>
                         </div>
