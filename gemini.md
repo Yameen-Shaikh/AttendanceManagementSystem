@@ -329,3 +329,26 @@ To allow teachers to differentiate lectures by subject and generate QR codes for
     -   `teacher/templates/teacher/view_lectures.html`: Modified to display the subject name and its associated class name.
     -   `teacher/templates/teacher/teacher_dashboard.html`: The "Schedule Lecture" and "View Lectures" buttons now correctly pass `subject.id` and display the subject name for clarity.
     -   `teacher/templates/teacher/reports.html`: Updated to use a "Select Subject" dropdown and pass `subject.id` to the `get_attendance_data` function for subject-specific attendance charts.
+
+## 20. QR Code and Attendance Workflow Refinements
+
+This series of changes addresses bugs and improves the logic related to QR code generation and attendance marking.
+
+-   **Fixed "Already Marked" Bug:**
+    -   **Problem:** Students would scan a new QR code but receive an "Attendance already marked" error if they had already marked attendance for that same lecture on a previous day.
+    -   **Diagnosis:** The `mark_attendance` view was correctly preventing duplicate attendance records for the *same lecture instance*. The workflow issue was that teachers were reusing a single lecture instance for multiple days.
+    -   **Solution:** The `mark_attendance` view was refactored to use `get_or_create`. This makes the process more robust. It now provides a consistent success message ("Attendance marked for {subject}") whether the attendance is new or was already recorded, avoiding user confusion while still preventing duplicate data entries.
+
+-   **Fixed QR Code Regeneration Crash:**
+    -   **Problem:** Generating a QR code for a lecture that had a previous (even expired) QR code would cause a database `IntegrityError`.
+    -   **Diagnosis:** The `lecture` field on the `QRCode` model was a `OneToOneField`, enforcing a rule that a lecture could only ever have one QR code in its lifetime.
+    -   **Solution:** The field was changed from a `OneToOneField` to a `ForeignKey`, correctly modeling that a lecture can have a history of multiple QR codes. A database migration was created and applied to enact this schema change.
+
+-   **Prevented QR Code Generation for Past Lectures:**
+    -   **Problem:** The system allowed teachers to generate QR codes for lectures scheduled on previous dates, which is not a valid workflow.
+    -   **Solution:** Logic was added to the `generate_qr_code` view to check if the lecture's date is in the past. If it is, the system now shows an error message ("You cannot generate a QR code for a past lecture.") and prevents the code from being generated.
+
+-   **Added CLI Helper Commands:**
+    -   To assist with development and debugging, two new management commands were created:
+        -   `python manage.py list_classes`: Lists all courses and their associated classes with their IDs.
+        -   `python manage.py get_subjects --class_id <ID>`: Lists all subjects for a given class ID.

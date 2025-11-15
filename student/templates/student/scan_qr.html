@@ -53,10 +53,10 @@
                     const modalTitle = document.getElementById('scanResultModalLabel');
                     if (data.success) {
                         modalTitle.innerText = 'Success';
-                        modalBody.innerHTML = `<p class="text-success">${data.message}</p>`;
+                        modalBody.innerHTML = `<p>${data.message}</p>`;
                     } else {
                         modalTitle.innerText = 'Error';
-                        modalBody.innerHTML = `<p class="text-danger">${data.message}</p>`;
+                        modalBody.innerHTML = `<p>${data.message}</p>`;
                     }
                     var myModal = new bootstrap.Modal(document.getElementById('scanResultModal'), {});
                     myModal.show();
@@ -66,7 +66,7 @@
                     const modalBody = document.getElementById('scanResultModalBody');
                     const modalTitle = document.getElementById('scanResultModalLabel');
                     modalTitle.innerText = 'Error';
-                    modalBody.innerHTML = `<p class="text-danger">An error occurred.</p>`;
+                    modalBody.innerHTML = `<p>An error occurred.</p>`;
                     var myModal = new bootstrap.Modal(document.getElementById('scanResultModal'), {});
                     myModal.show();
                 });

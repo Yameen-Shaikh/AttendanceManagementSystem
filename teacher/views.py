@@ -78,6 +78,11 @@ def generate_qr_code(request, lecture_id):
     if request.user.role != 'Teacher' or lecture.subject.teacher != request.user:
         return HttpResponseForbidden("You are not authorized to generate a QR code for this lecture.")
 
+    # Check if the lecture is in the past
+    if lecture.date < timezone.now().date():
+        messages.error(request, "You cannot generate a QR code for a past lecture.")
+        return redirect('teacher:view_lectures', subject_id=lecture.subject.id)
+
     # Check for an existing active QR code for this lecture
     active_qr_code = QRCode.objects.filter(
         lecture=lecture,
@@ -86,6 +91,7 @@ def generate_qr_code(request, lecture_id):
 
     if active_qr_code:
         qr_code = active_qr_code
+        messages.info(request, "An active QR code already exists and is being displayed.")
     else:
         # If no active QR code, create a new one
         expires_at = timezone.now() + timedelta(minutes=2)
@@ -96,6 +102,7 @@ def generate_qr_code(request, lecture_id):
             qr_code_data=new_qr_code_data, # Assign the generated UUID
             expires_at=expires_at
         )
+        messages.success(request, "A new QR code has been generated successfully.")
     
     context = {
         'lecture': lecture,

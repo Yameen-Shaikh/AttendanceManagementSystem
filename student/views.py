@@ -65,7 +65,7 @@ def mark_attendance(request):
             return JsonResponse({'success': False, 'message': 'QR code data not provided.'})
 
         try:
-            qr_code = QRCode.objects.get(qr_code_data=qr_code_data)
+            qr_code = QRCode.objects.select_related('lecture__subject__class_obj').get(qr_code_data=qr_code_data)
         except QRCode.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Invalid QR code.'})
 
@@ -79,39 +79,29 @@ def mark_attendance(request):
         lecture = qr_code.lecture
         if not lecture:
             return JsonResponse({'success': False, 'message': 'This QR code is not linked to a lecture.'})
-            
-        class_obj = lecture.subject.class_obj
-        subject_name = lecture.subject.name
+
+        subject = lecture.subject
+        class_obj = subject.class_obj
         
         # Check if the student is enrolled in the class
-        if student not in class_obj.students.all():
-            return JsonResponse({'success': False, 'message': 'You are not enrolled in this class.'})
+        if not student.enrolled_classes.filter(pk=class_obj.pk).exists():
+            return JsonResponse({'success': False, 'message': f'You are not enrolled in {class_obj.name}.'})
 
-        if Attendance.objects.filter(student=student, lecture=lecture).exists():
-            return JsonResponse({'success': False, 'message': 'Attendance already marked for this lecture.'})
-
-        Attendance.objects.create(
+        # Use get_or_create to handle existing attendance gracefully
+        attendance, created = Attendance.objects.get_or_create(
             student=student,
             lecture=lecture,
-            subject=lecture.subject,
-            date=lecture.date
+            defaults={'subject': subject, 'date': lecture.date}
         )
 
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            f'notification_{class_obj.id}',
-            {
-                'type': 'send_notification',
-                'message': 'Attendance marked successfully.'
-            }
-        )
+        message = f'Attendance marked for {subject.name}.'
 
-        return JsonResponse({'success': True, 'message': f'Attendance marked successfully for {subject_name}.'})
+        return JsonResponse({'success': True, 'message': message})
 
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'message': 'Invalid JSON data.'})
     except Exception as e:
-        return JsonResponse({'success': False, 'message': str(e)})
+        return JsonResponse({'success': False, 'message': 'An unexpected error occurred.'})
 
 @ensure_csrf_cookie
 @csrf_protect

@@ -51,7 +51,7 @@ class Attendance(models.Model):
 
 
 class QRCode(models.Model):
-    lecture = models.OneToOneField(Lecture, on_delete=models.CASCADE, related_name='qr_code', null=True, blank=True)
+    lecture = models.ForeignKey(Lecture, on_delete=models.CASCADE, related_name='qr_codes', null=True, blank=True)
     qr_code_data = models.UUIDField(default=uuid.uuid4, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
