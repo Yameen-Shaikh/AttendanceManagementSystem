@@ -8,7 +8,7 @@ from student.models import CustomUser
 from django.http import JsonResponse, HttpResponseForbidden
 from django.core.exceptions import PermissionDenied
 from django.views.decorators.http import require_POST
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from django.contrib.auth.hashers import make_password
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
@@ -351,3 +351,75 @@ def get_classes(request, course_id):
 
     classes = Class.objects.filter(course_id=course_id, session=active_session).values('id', 'name')
     return JsonResponse({'classes': list(classes)})
+
+@login_required
+def search_students(request, lecture_id):
+    if request.user.role != 'Teacher':
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+
+    query = request.GET.get('query', '')
+    lecture = get_object_or_404(Lecture, pk=lecture_id)
+
+    # Ensure the teacher is authorized for this lecture
+    if lecture.subject.teacher != request.user:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+
+    # Get students enrolled in the lecture's class
+    enrolled_students = lecture.subject.class_obj.students.all()
+
+    # Filter by name or roll number
+    if query:
+        students = enrolled_students.filter(
+            Q(name__icontains=query) | Q(roll_no__icontains=query)
+        )
+    else:
+        students = CustomUser.objects.none() # Return no students if query is empty
+
+    # Get IDs of students who have already marked attendance for this lecture
+    attended_students_ids = Attendance.objects.filter(lecture=lecture).values_list('student_id', flat=True)
+
+    student_data = [
+        {
+            'id': student.id,
+            'name': student.name,
+            'roll_no': student.roll_no,
+            'is_present': student.id in attended_students_ids
+        }
+        for student in students
+    ]
+
+    return JsonResponse({'students': student_data})
+
+@login_required
+@require_POST
+def manual_mark_attendance(request, lecture_id):
+    if request.user.role != 'Teacher':
+        return JsonResponse({'success': False, 'message': 'Permission denied'}, status=403)
+
+    lecture = get_object_or_404(Lecture, pk=lecture_id)
+
+    # Ensure the teacher is authorized for this lecture
+    if lecture.subject.teacher != request.user:
+        return JsonResponse({'success': False, 'message': 'Permission denied'}, status=403)
+
+    student_id = request.POST.get('student_id')
+    if not student_id:
+        return JsonResponse({'success': False, 'message': 'Student ID not provided.'})
+
+    student = get_object_or_404(CustomUser, pk=student_id, role='Student')
+
+    # Check if the student is enrolled in the class
+    if not lecture.subject.class_obj.students.filter(pk=student.id).exists():
+        return JsonResponse({'success': False, 'message': 'Student not enrolled in this class.'})
+
+    # Use get_or_create to mark attendance, preventing duplicates
+    attendance, created = Attendance.objects.get_or_create(
+        student=student,
+        lecture=lecture,
+        defaults={'subject': lecture.subject, 'date': lecture.date}
+    )
+
+    if created:
+        return JsonResponse({'success': True, 'message': f'Attendance marked for {student.name}.'})
+    else:
+        return JsonResponse({'success': False, 'message': f'Attendance already marked for {student.name}.'})
