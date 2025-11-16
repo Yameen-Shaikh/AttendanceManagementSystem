@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from .models import CustomUser
-from teacher.models import Class, Attendance, QRCode, Lecture
+from teacher.models import Class, Attendance, QRCode, Lecture, AcademicSession
 from django.http import JsonResponse, HttpResponseForbidden
 from django.core.exceptions import PermissionDenied
 from django.views.decorators.http import require_POST
@@ -30,8 +30,13 @@ def get_attendance_calendar_data(request):
     except ValueError:
         return JsonResponse({'error': 'Invalid date format.'}, status=400)
 
+    try:
+        active_session = AcademicSession.objects.get(is_active=True)
+    except AcademicSession.DoesNotExist:
+        return JsonResponse({'error': 'No active session'}, status=400)
+
     student = request.user
-    enrolled_classes = student.enrolled_classes.all()
+    enrolled_classes = student.enrolled_classes.filter(session=active_session)
     lectures = Lecture.objects.filter(
         subject__class_obj__in=enrolled_classes,
         date__range=[start_date, end_date]
@@ -138,7 +143,13 @@ def student_dashboard(request):
     if request.user.role != 'Student':
         raise PermissionDenied
     
-    enrolled_classes = request.user.enrolled_classes.all()
+    try:
+        active_session = AcademicSession.objects.get(is_active=True)
+    except AcademicSession.DoesNotExist:
+        messages.error(request, "There is no active academic session. Please contact an administrator.")
+        return render(request, 'student/student_dashboard.html', {'enrollments': []})
+
+    enrolled_classes = request.user.enrolled_classes.filter(session=active_session)
     enrollments = []
     if enrolled_classes.exists():
         for class_obj in enrolled_classes:
@@ -151,7 +162,8 @@ def student_dashboard(request):
             })
         return render(request, 'student/student_dashboard.html', {'enrollments': enrollments})
     else:
-        classes = Class.objects.all()
+        # Show classes from the active session for enrollment
+        classes = Class.objects.filter(session=active_session)
         return render(request, 'student/student_dashboard.html', {'classes': classes})
 
 @login_required
@@ -174,7 +186,11 @@ def student_register_view(request):
 
         if CustomUser.objects.filter(email=email).exists():
             messages.error(request, 'Email already exists.')
-            classes = Class.objects.all()
+            try:
+                active_session = AcademicSession.objects.get(is_active=True)
+                classes = Class.objects.filter(session=active_session)
+            except AcademicSession.DoesNotExist:
+                classes = []
             return render(request, 'student/register.html', {'classes': classes})
 
         user = CustomUser.objects.create(
@@ -188,20 +204,31 @@ def student_register_view(request):
         
         if class_id:
             try:
-                class_obj = Class.objects.get(id=class_id)
+                active_session = AcademicSession.objects.get(is_active=True)
+                class_obj = Class.objects.get(id=class_id, session=active_session)
                 class_obj.students.add(user)
                 messages.success(request, 'Registration successful. Please login.')
-            except Class.DoesNotExist:
-                messages.error(request, 'Invalid class selected.')
+            except (Class.DoesNotExist, AcademicSession.DoesNotExist):
+                messages.error(request, 'Invalid class selected for the current session.')
                 user.delete()
-                classes = Class.objects.all()
+                try:
+                    active_session = AcademicSession.objects.get(is_active=True)
+                    classes = Class.objects.filter(session=active_session)
+                except AcademicSession.DoesNotExist:
+                    classes = []
                 return render(request, 'student/register.html', {'classes': classes})
         else:
             messages.success(request, 'Registration successful. Please login.')
         
         return redirect('login')
 
-    classes = Class.objects.all()
+    try:
+        active_session = AcademicSession.objects.get(is_active=True)
+        classes = Class.objects.filter(session=active_session)
+    except AcademicSession.DoesNotExist:
+        messages.error(request, "Registration is currently disabled as there is no active academic session.")
+        classes = []
+        
     context = {
         'classes': classes
     }
@@ -242,7 +269,13 @@ def get_attendance_by_date(request):
 
 @login_required
 def unenroll(request, class_id):
-    class_obj = get_object_or_404(Class, id=class_id)
+    try:
+        active_session = AcademicSession.objects.get(is_active=True)
+        class_obj = get_object_or_404(Class, id=class_id, session=active_session)
+    except (AcademicSession.DoesNotExist, Class.DoesNotExist):
+        messages.error(request, 'This class is not available in the current academic session.')
+        return redirect('student:student_dashboard')
+
     if request.user in class_obj.students.all():
         class_obj.students.remove(request.user)
         messages.success(request, f'You have been unenrolled from {class_obj.name}.')
@@ -252,7 +285,13 @@ def unenroll(request, class_id):
 
 @login_required
 def enroll(request, class_id):
-    class_obj = get_object_or_404(Class, id=class_id)
+    try:
+        active_session = AcademicSession.objects.get(is_active=True)
+        class_obj = get_object_or_404(Class, id=class_id, session=active_session)
+    except (AcademicSession.DoesNotExist, Class.DoesNotExist):
+        messages.error(request, 'This class is not available in the current academic session.')
+        return redirect('student:student_dashboard')
+
     if request.user not in class_obj.students.all():
         class_obj.students.add(request.user)
         messages.success(request, f'You have been enrolled in {class_obj.name}.')
@@ -266,10 +305,15 @@ def reports(request):
 
 @login_required
 def get_attendance_data(request):
+    try:
+        active_session = AcademicSession.objects.get(is_active=True)
+    except AcademicSession.DoesNotExist:
+        return JsonResponse({'error': 'No active session'}, status=400)
+
     student = request.user
-    enrolled_classes = student.enrolled_classes.all()
+    enrolled_classes = student.enrolled_classes.filter(session=active_session)
     
-    # Get all lectures for the enrolled classes
+    # Get all lectures for the enrolled classes in the active session
     lectures = Lecture.objects.filter(subject__class_obj__in=enrolled_classes).order_by('date').values('id', 'date', 'subject__name')
     
     # Get all attendance records for the student

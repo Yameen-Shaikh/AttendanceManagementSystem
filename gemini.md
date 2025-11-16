@@ -352,3 +352,30 @@ This series of changes addresses bugs and improves the logic related to QR code 
     -   To assist with development and debugging, two new management commands were created:
         -   `python manage.py list_classes`: Lists all courses and their associated classes with their IDs.
         -   `python manage.py get_subjects --class_id <ID>`: Lists all subjects for a given class ID.
+
+## 21. Academic Session Management
+
+To support multiple academic sessions and ensure data isolation between sessions, a new `AcademicSession` model was introduced. This allows administrators to define academic years or terms, and the system now filters classes, subjects, and enrollments based on the currently active session.
+
+-   **New `AcademicSession` Model:**
+    -   Added an `AcademicSession` model in `teacher/models.py` with fields for name (e.g., '2025-2026'), start and end dates, and an `is_active` boolean to indicate the current session.
+    -   Updated the `Class` model to include a foreign key to `AcademicSession`, ensuring classes are tied to specific sessions.
+    -   Created database migrations to add the new model and update existing data.
+
+-   **Admin Interface Enhancements:**
+    -   Registered `AcademicSession` in the admin panel with list display, editable fields, and filters.
+    -   Added form classes with placeholders for `Course`, `Class`, `Subject`, and `AcademicSession` models to improve usability.
+    -   Introduced a `HistoricalAttendance` proxy model for viewing historical attendance records, with filters and search capabilities scoped to academic sessions.
+
+-   **Updated Views and Logic:**
+    -   Modified student views (`student/views.py`) to filter enrolled classes and available classes by the active session. Added error handling for cases where no active session is set.
+    -   Updated teacher views (`teacher/views.py`) to restrict subjects, classes, and reports to the active session. Teachers can only see and manage data for the current academic year.
+    -   Ensured registration and enrollment processes respect the active session, preventing students from enrolling in classes from inactive sessions.
+
+-   **Data Integrity and Filtering:**
+    -   All queries for classes, subjects, and lectures now include session-based filtering to maintain data separation between academic periods.
+    -   Added validation in registration and enrollment to check for active sessions, providing appropriate error messages when sessions are not configured.
+
+-   **Management Commands:**
+    -   Added `get_subjects` management command to list subjects for a given class ID, aiding in debugging and administration.
+    -   The existing `list_classes` command was retained for listing courses and classes.

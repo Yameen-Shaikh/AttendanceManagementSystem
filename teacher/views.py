@@ -3,12 +3,12 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from datetime import timedelta
-from .models import Course, Class, QRCode, Attendance, Lecture, Subject
+from .models import Course, Class, QRCode, Attendance, Lecture, Subject, AcademicSession
 from student.models import CustomUser
 from django.http import JsonResponse, HttpResponseForbidden
 from django.core.exceptions import PermissionDenied
 from django.views.decorators.http import require_POST
-import json
+from django.db.models import Prefetch
 from django.contrib.auth.hashers import make_password
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
@@ -18,7 +18,17 @@ def teacher_dashboard(request):
     if request.user.role != 'Teacher':
         raise PermissionDenied
     
-    subjects = Subject.objects.filter(teacher=request.user).select_related('class_obj__course')
+    try:
+        active_session = AcademicSession.objects.get(is_active=True)
+    except AcademicSession.DoesNotExist:
+        # Handle case where no active session is set
+        messages.error(request, "There is no active academic session. Please contact an administrator.")
+        return render(request, 'teacher/teacher_dashboard.html', {'courses_data': {}})
+
+    subjects = Subject.objects.filter(
+        teacher=request.user,
+        class_obj__session=active_session
+    ).select_related('class_obj__course')
     
     courses_data = {}
     for subject in subjects:
@@ -42,10 +52,26 @@ def select_class_view(request):
     if request.user.role != 'Teacher':
         raise PermissionDenied
 
-    courses = Course.objects.prefetch_related('classes').all()
+    try:
+        active_session = AcademicSession.objects.get(is_active=True)
+    except AcademicSession.DoesNotExist:
+        messages.error(request, "There is no active academic session. Please contact an administrator.")
+        return render(request, 'teacher/select_class.html', {'courses': []})
+
+    # Filter classes within the prefetch to only get those from the active session
+    courses = Course.objects.prefetch_related(
+        Prefetch(
+            'classes',
+            queryset=Class.objects.filter(session=active_session),
+            to_attr='active_classes'
+        )
+    ).all()
     
+    # Filter out courses that have no active classes
+    courses_with_active_classes = [course for course in courses if hasattr(course, 'active_classes') and course.active_classes]
+
     context = {
-        'courses': courses,
+        'courses': courses_with_active_classes,
     }
     return render(request, 'teacher/select_class.html', context)
 
@@ -282,8 +308,17 @@ def reports_view(request):
     if request.user.role != 'Teacher':
         raise PermissionDenied
     
-    # Get all subjects taught by the current teacher, prefetch related class and course
-    subjects_taught = Subject.objects.filter(teacher=request.user).select_related('class_obj__course')
+    try:
+        active_session = AcademicSession.objects.get(is_active=True)
+    except AcademicSession.DoesNotExist:
+        messages.error(request, "There is no active academic session. Please contact an administrator.")
+        return render(request, 'teacher/reports.html', {'courses_with_classes': {}})
+
+    # Get all subjects taught by the current teacher in the active session
+    subjects_taught = Subject.objects.filter(
+        teacher=request.user,
+        class_obj__session=active_session
+    ).select_related('class_obj__course')
     
     courses_data = {}
     for subject in subjects_taught:
@@ -309,5 +344,10 @@ def get_classes(request, course_id):
     if request.user.role != 'Teacher':
         return JsonResponse({'error': 'Permission denied'}, status=403)
     
-    classes = Class.objects.filter(course_id=course_id).values('id', 'name')
+    try:
+        active_session = AcademicSession.objects.get(is_active=True)
+    except AcademicSession.DoesNotExist:
+        return JsonResponse({'error': 'No active session'}, status=400)
+
+    classes = Class.objects.filter(course_id=course_id, session=active_session).values('id', 'name')
     return JsonResponse({'classes': list(classes)})
