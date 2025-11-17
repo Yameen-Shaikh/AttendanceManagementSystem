@@ -390,6 +390,8 @@ def search_students(request, lecture_id):
 
     return JsonResponse({'students': student_data})
 
+from student.email import send_attendance_confirmation_email
+
 @login_required
 @require_POST
 def manual_mark_attendance(request, lecture_id):
@@ -420,6 +422,8 @@ def manual_mark_attendance(request, lecture_id):
     )
 
     if created:
+        # Send confirmation email for new attendance records
+        send_attendance_confirmation_email(student, lecture)
         return JsonResponse({'success': True, 'message': f'Attendance marked for {student.name}.'})
     else:
         return JsonResponse({'success': False, 'message': f'Attendance already marked for {student.name}.'})

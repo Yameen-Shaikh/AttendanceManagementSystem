@@ -59,6 +59,8 @@ def get_attendance_calendar_data(request):
 
     return JsonResponse(events, safe=False)
 
+from .email import send_attendance_confirmation_email
+
 @login_required
 @require_POST
 def mark_attendance(request):
@@ -98,6 +100,10 @@ def mark_attendance(request):
             lecture=lecture,
             defaults={'subject': subject, 'date': lecture.date}
         )
+
+        if created:
+            # Send confirmation email for new attendance records
+            send_attendance_confirmation_email(student, lecture)
 
         message = f'Attendance marked for {subject.name}.'
 

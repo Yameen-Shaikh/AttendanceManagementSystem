@@ -1,0 +1,11 @@
+Hi {{ student_name }},
+
+This is a confirmation that your attendance has been successfully marked for the following lecture:
+
+Course: {{ course_name }}
+Class: {{ class_name }}
+Subject: {{ subject_name }}
+Date: {{ lecture_date }}
+Time: {{ lecture_time }}
+
+Thank you.

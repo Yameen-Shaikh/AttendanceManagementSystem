@@ -353,29 +353,38 @@ This series of changes addresses bugs and improves the logic related to QR code 
         -   `python manage.py list_classes`: Lists all courses and their associated classes with their IDs.
         -   `python manage.py get_subjects --class_id <ID>`: Lists all subjects for a given class ID.
 
-## 21. Academic Session Management
+## 21. Academic Session Management and Historical Data
 
-To support multiple academic sessions and ensure data isolation between sessions, a new `AcademicSession` model was introduced. This allows administrators to define academic years or terms, and the system now filters classes, subjects, and enrollments based on the currently active session.
+To support multiple academic years and preserve historical records, the application's data model and logic were fundamentally updated.
 
--   **New `AcademicSession` Model:**
-    -   Added an `AcademicSession` model in `teacher/models.py` with fields for name (e.g., '2025-2026'), start and end dates, and an `is_active` boolean to indicate the current session.
-    -   Updated the `Class` model to include a foreign key to `AcademicSession`, ensuring classes are tied to specific sessions.
-    -   Created database migrations to add the new model and update existing data.
+-   **Data Model Changes:**
+    -   **`AcademicSession` Model:** A new model was created in `teacher/models.py` to define distinct academic periods (e.g., "2025-2026"), each with a start date, end date, and an `is_active` flag.
+    -   **`Class` Model Update:** The `Class` model was linked to `AcademicSession` via a non-nullable foreign key, ensuring every class belongs to a specific session.
+    -   **Data Integrity:** The `on_delete` property for `Attendance.lecture` was set to `SET_NULL`, preventing attendance records from being deleted if a lecture is pruned.
+    -   **Proxy Model for Reporting:** A proxy model, `HistoricalAttendance`, was created to provide a dedicated view in the admin panel for historical data without altering the original `Attendance` model.
 
--   **Admin Interface Enhancements:**
-    -   Registered `AcademicSession` in the admin panel with list display, editable fields, and filters.
-    -   Added form classes with placeholders for `Course`, `Class`, `Subject`, and `AcademicSession` models to improve usability.
-    -   Introduced a `HistoricalAttendance` proxy model for viewing historical attendance records, with filters and search capabilities scoped to academic sessions.
+-   **Session-Aware Application Logic:**
+    -   **Teacher and Student Views:** All relevant views in both the `teacher` and `student` apps were updated to be "session-aware." They now filter all data (classes, subjects, reports, etc.) based on the currently active `AcademicSession`.
+    -   **User Experience:** The UI now only presents users with options and data relevant to the current academic year, preventing confusion and errors like enrolling in a class from a past session. Error handling was added for cases where no active session is configured.
 
--   **Updated Views and Logic:**
-    -   Modified student views (`student/views.py`) to filter enrolled classes and available classes by the active session. Added error handling for cases where no active session is set.
-    -   Updated teacher views (`teacher/views.py`) to restrict subjects, classes, and reports to the active session. Teachers can only see and manage data for the current academic year.
-    -   Ensured registration and enrollment processes respect the active session, preventing students from enrolling in classes from inactive sessions.
+-   **Administrator Historical Data Review:**
+    -   **Django Admin Integration:** Instead of a new interface, the existing Django Admin panel was enhanced.
+    -   **Session Management:** Administrators can now manage academic sessions directly from the admin panel, including creating new sessions and activating/deactivating them.
+    -   **Historical Attendance View:** A new "Historical Attendance Records" section is available in the admin panel. This read-only view allows admins to easily filter all attendance records by academic session, subject, or student, providing a powerful tool for reviewing past data.
 
--   **Data Integrity and Filtering:**
-    -   All queries for classes, subjects, and lectures now include session-based filtering to maintain data separation between academic periods.
-    -   Added validation in registration and enrollment to check for active sessions, providing appropriate error messages when sessions are not configured.
+## 22. Teacher Manual Attendance
 
--   **Management Commands:**
-    -   Added `get_subjects` management command to list subjects for a given class ID, aiding in debugging and administration.
-    -   The existing `list_classes` command was retained for listing courses and classes.
+To handle cases where students cannot scan a QR code, teachers can now mark attendance manually.
+
+-   **New Feature:**
+    -   A "Manual Attendance" section was added to the QR code generation page (`teacher/generate_qr.html`).
+    -   This provides teachers with a search bar to find students in their class by name or roll number.
+-   **Interactive UI:**
+    -   The search results are displayed dynamically on the page without a reload.
+    -   Each student in the results has a "Mark Present" button. The button is disabled if the student's attendance has already been marked.
+    -   Clicking the button marks the student as present and provides immediate visual feedback to the teacher.
+-   **Backend Implementation:**
+    -   Two new API endpoints were created: `search_students` to fetch student data and `manual_mark_attendance` to record the attendance.
+    -   These views use AJAX to provide a seamless user experience.
+-   **UI Refinements:**
+    -   The QR code and manual attendance features were consolidated into a single, full-width card for a cleaner and more unified "Live Lecture Panel."
