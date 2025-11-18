@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-60n(8w=5oru-y19m&pn_1vi7hydu%3qlo&@xdy(5_i^0@hapza
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.0.103', '127.0.0.1', '192.168.0.104', '0.0.0.0']
+ALLOWED_HOSTS = ['192.168.0.103', '127.0.0.1', '192.168.0.104', '0.0.0.0', 'testserver']
 
 
 # Application definition
@@ -147,4 +147,14 @@ AUTH_USER_MODEL = 'student.CustomUser'
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# # Production Email Settings (uncomment and fill in your details)
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'  # Example for Gmail
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'your-email@gmail.com'  # Your email address
+# EMAIL_HOST_PASSWORD = 'your-app-password'  # Your email app password
+# DEFAULT_FROM_EMAIL = 'your-email@gmail.com'
+
 

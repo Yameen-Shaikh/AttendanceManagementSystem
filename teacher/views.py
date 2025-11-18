@@ -274,34 +274,68 @@ def prune_lectures_view(request):
     # Redirect back to the page the user came from.
     return redirect(request.META.get('HTTP_REFERER', 'teacher:teacher_dashboard'))
 
+
 @login_required
-def get_attendance_data(request, subject_id): # Changed from class_id
-    # 1. Validate user and subject
-    subject = get_object_or_404(Subject, pk=subject_id)
-    if request.user.role != 'Teacher' or subject.teacher != request.user:
-        return JsonResponse({'error': 'Subject not found or you do not have permission to view it.'}, status=404)
+def get_teacher_subject_attendance_data(request):
+    subject_id = request.GET.get('subject_id')
+    if not subject_id:
+        return JsonResponse({'error': 'Subject ID is required.'}, status=400)
 
-    # 2. Get all lectures for the subject
-    lectures = Lecture.objects.filter(subject=subject).order_by('date', 'time')
+    try:
+        subject = Subject.objects.get(pk=subject_id)
+        # Optional: Add permission check if a teacher should only access their own subjects
+        if request.user.role == 'Teacher' and subject.teacher != request.user:
+            return JsonResponse({'error': 'Permission denied.'}, status=403)
+    except Subject.DoesNotExist:
+        return JsonResponse({'error': 'Subject not found.'}, status=404)
 
-    # 3. Get total number of students in the class associated with the subject
+    total_lectures = Lecture.objects.filter(subject=subject).count()
     total_students = subject.class_obj.students.count()
+    
+    if total_lectures == 0 or total_students == 0:
+        return JsonResponse({'present': 0, 'absent': 0})
 
-    # 4. Calculate attendance percentage for each lecture
-    attendance_data = []
-    for lecture in lectures:
-        present_students = Attendance.objects.filter(lecture=lecture).count()
-        if total_students > 0:
-            percentage = (present_students / total_students) * 100
-        else:
-            percentage = 0
-        attendance_data.append({
-            'date': lecture.date.strftime('%Y-%m-%d'),
-            'percentage': round(percentage, 2)
+    total_possible_attendances = total_students * total_lectures
+    actual_attendances = Attendance.objects.filter(lecture__subject=subject).count()
+
+    return JsonResponse({
+        'present': actual_attendances,
+        'absent': total_possible_attendances - actual_attendances
+    })
+
+
+@login_required
+def get_student_attendance_percentages(request):
+    subject_id = request.GET.get('subject_id')
+    if not subject_id:
+        return JsonResponse({'error': 'Subject ID is required.'}, status=400)
+
+    try:
+        subject = Subject.objects.get(pk=subject_id)
+        if request.user.role == 'Teacher' and subject.teacher != request.user:
+            return JsonResponse({'error': 'Permission denied.'}, status=403)
+    except Subject.DoesNotExist:
+        return JsonResponse({'error': 'Subject not found.'}, status=404)
+
+    total_lectures = Lecture.objects.filter(subject=subject).count()
+    if total_lectures == 0:
+        return JsonResponse({'students': []})
+
+    students = subject.class_obj.students.all()
+    student_percentages = []
+    for student in students:
+        attended_count = Attendance.objects.filter(
+            lecture__subject=subject,
+            student=student
+        ).count()
+        percentage = (attended_count / total_lectures) * 100 if total_lectures > 0 else 0
+        student_percentages.append({
+            'name': student.name,
+            'percentage': round(percentage)
         })
 
-    # 5. Return data as JSON
-    return JsonResponse(attendance_data, safe=False)
+    return JsonResponse({'students': student_percentages})
+
 
 @login_required
 def reports_view(request):
@@ -312,30 +346,22 @@ def reports_view(request):
         active_session = AcademicSession.objects.get(is_active=True)
     except AcademicSession.DoesNotExist:
         messages.error(request, "There is no active academic session. Please contact an administrator.")
-        return render(request, 'teacher/reports.html', {'courses_with_classes': {}})
+        return render(request, 'teacher/reports.html', {'courses_with_subjects': {}})
 
-    # Get all subjects taught by the current teacher in the active session
     subjects_taught = Subject.objects.filter(
         teacher=request.user,
         class_obj__session=active_session
     ).select_related('class_obj__course')
-    
-    courses_data = {}
+
+    courses_with_subjects = {}
     for subject in subjects_taught:
         course = subject.class_obj.course
-        class_obj = subject.class_obj
-        
-        if course not in courses_data:
-            courses_data[course] = []
-        
-        # Add class_obj to the list if not already present
-        if class_obj not in courses_data[course]:
-            courses_data[course].append(class_obj)
-            # Ensure subjects are prefetched for this class_obj
-            class_obj.subjects_all = Subject.objects.filter(class_obj=class_obj, teacher=request.user)
+        if course not in courses_with_subjects:
+            courses_with_subjects[course] = []
+        courses_with_subjects[course].append(subject)
 
     context = {
-        'courses_with_classes': courses_data,
+        'courses_with_subjects': courses_with_subjects,
     }
     return render(request, 'teacher/reports.html', context)
 

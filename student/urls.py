@@ -17,5 +17,6 @@ urlpatterns = [
     path('unenroll/<int:class_id>/', views.unenroll, name='unenroll'),
     path('enroll/<int:class_id>/', views.enroll, name='enroll'),
     path('reports/', views.reports, name='reports'),
-    path('get-attendance-data/', views.get_attendance_data, name='get_attendance_data'),
+    path('get-student-subject-attendance-data/', views.get_student_subject_attendance_data, name='get_student_subject_attendance_data'),
+    path('get-student-attendance-trend/', views.get_student_attendance_trend, name='get_student_attendance_trend'),
 ]

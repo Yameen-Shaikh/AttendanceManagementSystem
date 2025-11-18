@@ -388,3 +388,30 @@ To handle cases where students cannot scan a QR code, teachers can now mark atte
     -   These views use AJAX to provide a seamless user experience.
 -   **UI Refinements:**
     -   The QR code and manual attendance features were consolidated into a single, full-width card for a cleaner and more unified "Live Lecture Panel."
+
+## 23. Email Confirmation for Attendance
+
+- **New Feature:**
+    - Implemented a feature to send a confirmation email to students when their attendance is marked.
+- **Implementation Details:**
+    - Created a new `email.py` file in the `student` app to handle the email sending logic.
+    - Added a new template `student/templates/student/email/attendance_confirmation.txt` for the email body.
+    - The `mark_attendance` view in `student/views.py` and the `manual_mark_attendance` view in `teacher/views.py` were updated to call the email sending function.
+- **Configuration:**
+    - The `EMAIL_BACKEND` in `ams/settings.py` is set to `django.core.mail.backends.console.EmailBackend` for development.
+    - Added commented-out settings for production email configuration using SMTP.
+
+## 24. Reporting UI and Charting Refinements
+
+- **Report Page Overhaul:**
+    - The report pages for both students and teachers were updated to provide a more focused and clear presentation of attendance data.
+    - Removed the "My Attendance Trend" line chart from the student reports page and the "Student Attendance Percentage" bar chart from the teacher reports page to simplify the UI.
+- **Pie Chart Implementation:**
+    - Both report pages now feature a primary pie chart that displays the distribution of "Attended" vs. "Missed" lectures (for students) or "Present" vs. "Absent" statuses (for teachers) for a selected subject.
+    - The backend views (`get_student_subject_attendance_data` and `get_teacher_subject_attendance_data`) were created or updated to supply the necessary data for these pie charts.
+- **Bug Fix & UX Improvements:**
+    - **Chart.js Dependency:** Fixed a bug on the student reports page where the chart would not render because the Chart.js library was not included. It has been added to the `base_student.html` template.
+    - **Auto-Selection:** The student reports page now automatically selects the first subject in the dropdown menu, allowing the chart to load immediately without user interaction.
+    - **Layout Adjustments:**
+        - The height of the chart on the student reports page was reduced to prevent the card from becoming scrollable on smaller screens.
+        - The card and the subject-selection dropdown on the teacher reports page were made full-width to provide a more spacious layout.

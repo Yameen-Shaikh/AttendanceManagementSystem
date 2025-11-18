@@ -35,7 +35,7 @@
                     </select>
                 </div>
 
-                <a href="#" id="add-subject-btn" class="btn btn-primary disabled">Add Subject</a>
+                <a href="#" id="add-subject-btn" class="btn btn-primary">Add Subject</a>
             </form>
         </div>
     </div>
@@ -51,7 +51,6 @@ document.getElementById('course-select').addEventListener('change', function() {
 
     classSelect.innerHTML = '<option selected disabled>Loading...</option>';
     classSelect.disabled = false;
-    addSubjectBtn.classList.add('disabled');
     addSubjectBtn.href = '#';
 
     fetch(`/teacher/get-classes/${courseId}/`)
@@ -67,7 +66,6 @@ document.getElementById('course-select').addEventListener('change', function() {
                 });
             } else {
                 classSelect.innerHTML = '<option selected disabled>No class yet</option>';
-                addSubjectBtn.classList.add('disabled');
                 addSubjectBtn.href = '#';
             }
         });
@@ -78,11 +76,17 @@ document.getElementById('class-select').addEventListener('change', function() {
     const addSubjectBtn = document.getElementById('add-subject-btn');
 
     if (classId) {
-        addSubjectBtn.classList.remove('disabled');
         addSubjectBtn.href = `/teacher/class/${classId}/create-subject/`;
     } else {
-        addSubjectBtn.classList.add('disabled');
         addSubjectBtn.href = '#';
+    }
+});
+
+document.getElementById('add-subject-btn').addEventListener('click', function(event) {
+    const classSelect = document.getElementById('class-select');
+    if (!classSelect.value || classSelect.value === 'Select a class') {
+        event.preventDefault();
+        alert('Please select a class first.');
     }
 });
 </script>

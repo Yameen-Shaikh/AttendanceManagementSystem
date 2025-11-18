@@ -7,28 +7,31 @@
 <div class="main-content mt-4">
     {% block content %}
     <div class="container-fluid">
-        <div class="row mb-4">
+        <div class="row justify-content-center">
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
                         <h5 class="gradient-title">Attendance Performance</h5>
                     </div>
                     <div class="card-body">
-                        <div class="row justify-content-center mb-3">
-                            <div class="col-md-10">
+                        <div class="row mb-4">
+                            <div class="col-md-12">
                                 <label for="subjectSelector" class="form-label">Select Subject:</label>
                                 <select id="subjectSelector" class="form-select custom-select">
-                                    {% for course, classes in courses_with_classes.items %}
-                                        {% for class_obj in classes %}
-                                            {% for subject in class_obj.subjects.all %} {# Iterate through subjects #}
-                                                <option value="{{ subject.id }}">{{ course.name }} - {{ class_obj.name }} - {{ subject.name }}</option>
+                                    <option value="" disabled selected>-- Select a Subject --</option>
+                                    {% for course, subjects in courses_with_subjects.items %}
+                                        <optgroup label="{{ course.name }}">
+                                            {% for subject in subjects %}
+                                                <option value="{{ subject.id }}">{{ subject.class_obj.name }} - {{ subject.name }}</option>
                                             {% endfor %}
-                                        {% endfor %}
+                                        </optgroup>
                                     {% endfor %}
                                 </select>
                             </div>
                         </div>
-                        <canvas id="attendanceChart"></canvas>
+                        <div style="height: 400px; display: flex; align-items: center; justify-content: center;">
+                            <canvas id="attendanceChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -41,60 +44,91 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const subjectSelector = document.getElementById('subjectSelector'); // Changed from classSelector
-    const ctx = document.getElementById('attendanceChart').getContext('2d');
-    let attendanceChart;
+    const subjectSelector = document.getElementById('subjectSelector');
+    const pieCtx = document.getElementById('attendanceChart').getContext('2d');
+    let attendancePieChart;
 
-    function renderChart(data) {
-        const labels = data.map(item => item.date);
-        const percentages = data.map(item => item.percentage);
-
-        if (attendanceChart) {
-            attendanceChart.destroy();
+    function renderPieChart(data) {
+        if (attendancePieChart) {
+            attendancePieChart.destroy();
         }
 
-        attendanceChart = new Chart(ctx, {
-            type: 'line',
+        if (data.present === 0 && data.absent === 0) {
+            pieCtx.clearRect(0, 0, pieCtx.canvas.width, pieCtx.canvas.height);
+            pieCtx.textAlign = 'center';
+            pieCtx.textBaseline = 'middle';
+            pieCtx.font = '20px Arial';
+            pieCtx.fillText('No attendance data available for this subject.', pieCtx.canvas.width / 2, pieCtx.canvas.height / 2);
+            return;
+        }
+
+        attendancePieChart = new Chart(pieCtx, {
+            type: 'pie',
             data: {
-                labels: labels,
+                labels: ['Present', 'Absent'],
                 datasets: [{
-                    label: 'Attendance Percentage',
-                    data: percentages,
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    fill: true,
+                    label: 'Attendance',
+                    data: [data.present, data.absent],
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(255, 99, 132, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 99, 132, 1)'
+                    ],
+                    borderWidth: 1
                 }]
             },
             options: {
                 responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Overall Attendance Distribution'
                     }
                 }
             }
         });
     }
 
-    function fetchAttendanceData() {
-        const subjectId = subjectSelector.value; // Changed from classId
+    function fetchAllChartData() {
+        const subjectId = subjectSelector.value;
         if (subjectId) {
-            fetch(`/teacher/subject/${subjectId}/attendance-data/`) // Changed URL
+            // Fetch data for pie chart
+            fetch(`{% url 'teacher:get_teacher_subject_attendance_data' %}?subject_id=${subjectId}`)
                 .then(response => response.json())
                 .then(data => {
-                    renderChart(data);
+                    if (data.error) {
+                        console.error('Error fetching pie chart data:', data.error);
+                        pieCtx.clearRect(0, 0, pieCtx.canvas.width, pieCtx.canvas.height);
+                        pieCtx.textAlign = 'center';
+                        pieCtx.fillText('Error loading data.', pieCtx.canvas.width / 2, pieCtx.canvas.height / 2);
+                    } else {
+                        renderPieChart(data);
+                    }
                 })
-                .catch(error => console.error('Error fetching attendance data:', error));
+                .catch(error => console.error('Error fetching pie chart data:', error));
+
+        } else {
+            // Clear charts if no subject is selected
+            if (attendancePieChart) {
+                attendancePieChart.destroy();
+            }
+            pieCtx.clearRect(0, 0, pieCtx.canvas.width, pieCtx.canvas.height);
+            pieCtx.textAlign = 'center';
+            pieCtx.fillText('Please select a subject to view the report.', pieCtx.canvas.width / 2, pieCtx.canvas.height / 2);
         }
     }
 
-    subjectSelector.addEventListener('change', fetchAttendanceData); // Changed from classSelector
+    subjectSelector.addEventListener('change', fetchAllChartData);
 
-    // Initial chart load
-    if (subjectSelector.options.length > 0) { // Changed from classSelector
-        fetchAttendanceData();
-    }
+    // Initial state message
+    fetchAllChartData();
 });
 </script>
 {% endblock %}

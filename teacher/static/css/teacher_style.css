@@ -354,3 +354,9 @@ input[type="password"],
 .custom-select {
     width: 100%;
 }
+
+.custom-select {
+    width: 100%;
+    max-width: 500px; /* Adjust as needed */
+    margin: 0 auto;
+}

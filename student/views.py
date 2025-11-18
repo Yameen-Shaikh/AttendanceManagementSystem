@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from .models import CustomUser
-from teacher.models import Class, Attendance, QRCode, Lecture, AcademicSession
+from teacher.models import Class, Attendance, QRCode, Lecture, AcademicSession, Subject
 from django.http import JsonResponse, HttpResponseForbidden
 from django.core.exceptions import PermissionDenied
 from django.views.decorators.http import require_POST
@@ -307,42 +307,73 @@ def enroll(request, class_id):
 
 @login_required
 def reports(request):
-    return render(request, 'student/reports.html')
-
-@login_required
-def get_attendance_data(request):
     try:
         active_session = AcademicSession.objects.get(is_active=True)
     except AcademicSession.DoesNotExist:
-        return JsonResponse({'error': 'No active session'}, status=400)
+        messages.error(request, "Reports are unavailable as there is no active academic session.")
+        return render(request, 'student/reports.html', {'subjects': []})
 
-    student = request.user
-    enrolled_classes = student.enrolled_classes.filter(session=active_session)
+    enrolled_classes = request.user.enrolled_classes.filter(session=active_session)
+    subjects = Subject.objects.filter(class_obj__in=enrolled_classes).order_by('class_obj__course__name', 'name')
     
-    # Get all lectures for the enrolled classes in the active session
-    lectures = Lecture.objects.filter(subject__class_obj__in=enrolled_classes).order_by('date').values('id', 'date', 'subject__name')
-    
-    # Get all attendance records for the student
-    attended_lecture_ids = set(Attendance.objects.filter(student=student).values_list('lecture_id', flat=True))
-    
-    # Process data for the chart
-    labels = sorted(list(set([l['date'] for l in lectures])))
-    datasets = {}
+    context = {
+        'subjects': subjects
+    }
+    return render(request, 'student/reports.html', context)
 
-    for lecture in lectures:
-        subject = lecture['subject__name']
-        if subject not in datasets:
-            datasets[subject] = {
-                'label': subject,
-                'data': [0] * len(labels),
-                'borderColor': '#%06x' % random.randint(0, 0xFFFFFF),
-                'fill': False
-            }
-        
-        label_index = labels.index(lecture['date'])
-        if lecture['id'] in attended_lecture_ids:
-            datasets[subject]['data'][label_index] = 1
 
-    formatted_labels = [date.strftime('%Y-%m-%d') for date in labels]
+@login_required
+def get_student_subject_attendance_data(request):
+    subject_id = request.GET.get('subject_id')
+    if not subject_id:
+        return JsonResponse({'error': 'Subject ID is required.'}, status=400)
+
+    try:
+        subject = Subject.objects.get(pk=subject_id)
+        # Permission check: Ensure the student is enrolled in the subject's class
+        if not request.user.enrolled_classes.filter(pk=subject.class_obj.pk).exists():
+            return JsonResponse({'error': 'Permission denied.'}, status=403)
+    except Subject.DoesNotExist:
+        return JsonResponse({'error': 'Subject not found.'}, status=404)
+
+    total_lectures = Lecture.objects.filter(subject=subject).count()
     
-    return JsonResponse({'labels': formatted_labels, 'datasets': list(datasets.values())})
+    if total_lectures == 0:
+        return JsonResponse({'attended': 0, 'missed': 0})
+
+    attended_lectures = Attendance.objects.filter(
+        student=request.user,
+        lecture__subject=subject
+    ).count()
+
+    return JsonResponse({
+        'attended': attended_lectures,
+        'missed': total_lectures - attended_lectures
+    })
+
+@login_required
+def get_student_attendance_trend(request):
+    subject_id = request.GET.get('subject_id')
+    if not subject_id:
+        return JsonResponse({'error': 'Subject ID is required.'}, status=400)
+
+    try:
+        subject = Subject.objects.get(pk=subject_id)
+        if not request.user.enrolled_classes.filter(pk=subject.class_obj.pk).exists():
+            return JsonResponse({'error': 'Permission denied.'}, status=403)
+    except Subject.DoesNotExist:
+        return JsonResponse({'error': 'Subject not found.'}, status=404)
+
+    lectures = Lecture.objects.filter(subject=subject).order_by('date')
+    if not lectures.exists():
+        return JsonResponse({'labels': [], 'data': []})
+
+    attended_lecture_ids = set(Attendance.objects.filter(
+        student=request.user,
+        lecture__in=lectures
+    ).values_list('lecture_id', flat=True))
+
+    labels = [lecture.date.strftime('%Y-%m-%d') for lecture in lectures]
+    data = [1 if lecture.id in attended_lecture_ids else 0 for lecture in lectures]
+
+    return JsonResponse({'labels': labels, 'data': data})

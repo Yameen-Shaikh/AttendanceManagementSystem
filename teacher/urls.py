@@ -21,6 +21,7 @@ urlpatterns = [
     path('subject/<int:subject_id>/report/', views.view_report, name='view_report'),
     path('profile/', views.profile, name='profile'),
     path('get-classes/<int:course_id>/', views.get_classes, name='get_classes'),
-    path('subject/<int:subject_id>/attendance-data/', views.get_attendance_data, name='get_attendance_data'),
     path('reports/', views.reports_view, name='reports'),
+    path('get-teacher-subject-attendance-data/', views.get_teacher_subject_attendance_data, name='get_teacher_subject_attendance_data'),
+    path('get-student-attendance-percentages/', views.get_student_attendance_percentages, name='get_student_attendance_percentages'),
 ]
