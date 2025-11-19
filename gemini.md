@@ -415,3 +415,15 @@ To handle cases where students cannot scan a QR code, teachers can now mark atte
     - **Layout Adjustments:**
         - The height of the chart on the student reports page was reduced to prevent the card from becoming scrollable on smaller screens.
         - The card and the subject-selection dropdown on the teacher reports page were made full-width to provide a more spacious layout.
+- **Teacher's Report Page:**
+    - Added a search filter to the student attendance table.
+    - Made the student attendance table scrollable with a fixed header.
+    - Centered the "Report Summary" text.
+- **Prune Lectures:**
+    - Changed the default value of the "prune lectures" input to 7 days.
+- **Email Settings:**
+    - Commented out the `EMAIL_BACKEND` setting to disable console email output.
+- **Reporting UI and Charting Refinements:**
+    - Fixed an issue where messages on the attendance performance card were not displayed correctly.
+    - Added percentage labels to the pie charts on both the teacher and student report pages.
+    - Removed decimal points from the percentage labels.

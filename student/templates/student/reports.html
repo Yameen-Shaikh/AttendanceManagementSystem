@@ -3,6 +3,15 @@
 
 {% block title %}Student Reports{% endblock %}
 
+{% block extra_css %}
+<style>
+    #chartMessage {
+        color: #fff;
+        font-size: 1.2rem;
+    }
+</style>
+{% endblock %}
+
 {% block content_wrapper %}
 <div class="main-content mt-4">
     {% block content %}
@@ -25,8 +34,9 @@
                                 </select>
                             </div>
                         </div>
-                        <div style="height: 300px; display: flex; align-items: center; justify-content: center;">
-                            <canvas id="attendanceChart"></canvas>
+                        <div id="chartContainer" style="height: 300px; display: flex; align-items: center; justify-content: center;">
+                            <div id="chartMessage">Please select a subject to view your report.</div>
+                            <canvas id="attendanceChart" style="display: none;"></canvas>
                         </div>
                     </div>
                 </div>
@@ -41,8 +51,28 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const subjectSelector = document.getElementById('subjectSelector');
-    const pieCtx = document.getElementById('attendanceChart').getContext('2d');
+    const chartContainer = document.getElementById('chartContainer');
+    const chartMessage = document.getElementById('chartMessage');
+    const canvas = document.getElementById('attendanceChart');
+    const pieCtx = canvas.getContext('2d');
     let attendancePieChart;
+
+    // Register the datalabels plugin
+    Chart.register(ChartDataLabels);
+
+    function showMessage(message) {
+        chartMessage.textContent = message;
+        chartMessage.style.display = 'block';
+        canvas.style.display = 'none';
+        if (attendancePieChart) {
+            attendancePieChart.destroy();
+        }
+    }
+
+    function showChart() {
+        chartMessage.style.display = 'none';
+        canvas.style.display = 'block';
+    }
 
     function renderPieChart(data) {
         if (attendancePieChart) {
@@ -50,15 +80,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (data.attended === 0 && data.missed === 0) {
-            pieCtx.clearRect(0, 0, pieCtx.canvas.width, pieCtx.canvas.height);
-            pieCtx.textAlign = 'center';
-            pieCtx.textBaseline = 'middle';
-            pieCtx.font = '20px Arial';
-            pieCtx.fillStyle = 'white';
-            pieCtx.fillText('No lectures scheduled for this subject yet.', pieCtx.canvas.width / 2, pieCtx.canvas.height / 2);
+            showMessage('No lectures scheduled for this subject yet.');
             return;
         }
 
+        showChart();
         attendancePieChart = new Chart(pieCtx, {
             type: 'pie',
             data: {
@@ -91,6 +117,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         display: true,
                         text: 'My Attendance Distribution',
                         color: 'white'
+                    },
+                    datalabels: {
+                        formatter: (value, ctx) => {
+                            let sum = 0;
+                            let dataArr = ctx.chart.data.datasets[0].data;
+                            dataArr.map(data => {
+                                sum += data;
+                            });
+                            let percentage = Math.round(value*100 / sum)+"%";
+                            return percentage;
+                        },
+                        color: '#fff',
                     }
                 }
             }
@@ -100,32 +138,22 @@ document.addEventListener('DOMContentLoaded', function() {
     function fetchAllChartData() {
         const subjectId = subjectSelector.value;
         if (subjectId) {
-            // Fetch data for pie chart
             fetch(`{% url 'student:get_student_subject_attendance_data' %}?subject_id=${subjectId}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.error) {
                         console.error('Error fetching pie chart data:', data.error);
-                        pieCtx.clearRect(0, 0, pieCtx.canvas.width, pieCtx.canvas.height);
-                        pieCtx.textAlign = 'center';
-                        pieCtx.fillStyle = 'white';
-                        pieCtx.fillText('Error loading data.', pieCtx.canvas.width / 2, pieCtx.canvas.height / 2);
+                        showMessage('Error loading data.');
                     } else {
                         renderPieChart(data);
                     }
                 })
-                .catch(error => console.error('Error fetching pie chart data:', error));
-
+                .catch(error => {
+                    console.error('Error fetching pie chart data:', error);
+                    showMessage('An unexpected error occurred.');
+                });
         } else {
-            if (attendancePieChart) {
-                attendancePieChart.destroy();
-            }
-            pieCtx.clearRect(0, 0, pieCtx.canvas.width, pieCtx.canvas.height);
-            pieCtx.textAlign = 'center';
-            pieCtx.textBaseline = 'middle';
-            pieCtx.font = '20px Arial';
-            pieCtx.fillStyle = 'white';
-            pieCtx.fillText('Please select a subject to view your report.', pieCtx.canvas.width / 2, pieCtx.canvas.height / 2);
+            showMessage('Please select a subject to view your report.');
         }
     }
 

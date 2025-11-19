@@ -146,7 +146,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'student.CustomUser'
 
 # Email settings
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # # Production Email Settings (uncomment and fill in your details)
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

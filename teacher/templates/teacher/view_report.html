@@ -2,23 +2,45 @@
 
 {% block title %}Attendance Report for {{ course.name }}{% endblock %}
 
+{% block extra_css %}
+<style>
+    .table-container {
+        max-height: 300px; /* Adjust height as needed for 5 rows */
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+    .table-container thead th {
+        position: sticky;
+        top: 0;
+        background-color: #f8f9fa;
+        z-index: 1;
+    }
+</style>
+{% endblock %}
+
 {% block content_wrapper %}
 <div class="main-content mt-4">
     {% block content %}
-    <!-- <div class="container"> -->
-        <div class="row justify-content-center">
-            <div class="col-md-10">
-                <div class="text-center my-4">
-                    <h3>Attendance Report for<br><strong>{{ course.name }}</strong></h3>
-                    
-                </div>
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="text-center my-4">
+                <h3>Attendance Report for<br><strong>{{ subject.name }} - {{ subject.class_obj.name }}</strong></h3>
+            </div>
 
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Report Summary</h5>
-                        <p class="card-text mb-1"><strong>Average Attendance:</strong> {{ average_attendance }}%</p>
-                        <p class="card-text"><strong>Total Students:</strong> {{ total_students }}</p>
-                        <table class="table mt-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <h5 class="card-title mb-0">Report Summary</h5>
+                    </div>
+                    <p class="card-text mb-1"><strong>Average Attendance:</strong> {{ average_attendance }}%</p>
+                    <p class="card-text"><strong>Total Students:</strong> {{ total_students }}</p>
+                    <div class="d-flex justify-content-center my-3">
+                        <input type="text" id="searchInput" class="form-control w-50" placeholder="Search for students...">
+                    </div>
+                    
+                    <div class="table-container mt-4">
+                        <table class="table">
                             <thead>
                                 <tr>
                                     <th>Student Name</th>
@@ -27,7 +49,7 @@
                                     <th>Attendance %</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="studentReportTableBody">
                                 {% for report in student_reports %}
                                     <tr>
                                         <td>{{ report.student_name }}</td>
@@ -46,7 +68,33 @@
                 </div>
             </div>
         </div>
-    <!-- </div> -->
-{% endblock %}
+    </div>
+    {% endblock %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const tableBody = document.getElementById('studentReportTableBody');
+    const tableRows = tableBody.getElementsByTagName('tr');
+
+    searchInput.addEventListener('keyup', function() {
+        const filter = searchInput.value.toLowerCase();
+        
+        for (let i = 0; i < tableRows.length; i++) {
+            let studentNameCell = tableRows[i].getElementsByTagName('td')[0];
+            if (studentNameCell) {
+                let studentName = studentNameCell.textContent || studentNameCell.innerText;
+                if (studentName.toLowerCase().indexOf(filter) > -1) {
+                    tableRows[i].style.display = "";
+                } else {
+                    tableRows[i].style.display = "none";
+                }
+            }
+        }
+    });
+});
+</script>
 {% endblock %}
