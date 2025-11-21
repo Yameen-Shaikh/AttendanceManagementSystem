@@ -14,7 +14,7 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
 import student.routing
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ams.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ams.settings.development')
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),

@@ -11,21 +11,22 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-60n(8w=5oru-y19m&pn_1vi7hydu%3qlo&@xdy(5_i^0@hapza'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ['192.168.0.103', '127.0.0.1', '192.168.0.104', '0.0.0.0', 'testserver']
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost').split(',')
 
 
 # Application definition
@@ -128,16 +129,6 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
-
-
-
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
@@ -156,5 +147,3 @@ AUTH_USER_MODEL = 'student.CustomUser'
 # EMAIL_HOST_USER = 'your-email@gmail.com'  # Your email address
 # EMAIL_HOST_PASSWORD = 'your-app-password'  # Your email app password
 # DEFAULT_FROM_EMAIL = 'your-email@gmail.com'
-
-
