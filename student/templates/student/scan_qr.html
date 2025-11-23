@@ -33,48 +33,73 @@
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const config = {
+                fps: 10,
+                qrbox: { width: 250, height: 250 }
+            };
+
+            const html5QrCode = new Html5Qrcode("qr-reader");
+
             function onScanSuccess(decodedText, decodedResult) {
-                console.log(`Code matched = ${decodedText}`, decodedResult);
-                
-                // Send the QR code data to the server
-                fetch("{% url 'student:mark_attendance' %}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    body: JSON.stringify({
-                        'qr_code_data': decodedText
+                // Stop scanning after a successful scan.
+                html5QrCode.stop().then((ignore) => {
+                    console.log(`Code matched = ${decodedText}`, decodedResult);
+                    
+                    // Send the QR code data to the server
+                    fetch("{% url 'student:mark_attendance' %}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({
+                            'qr_code_data': decodedText
+                        })
                     })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    const modalBody = document.getElementById('scanResultModalBody');
-                    const modalTitle = document.getElementById('scanResultModalLabel');
-                    if (data.success) {
-                        modalTitle.innerText = 'Success';
-                        modalBody.innerHTML = `<p>${data.message}</p>`;
-                    } else {
+                    .then(response => response.json())
+                    .then(data => {
+                        const modalBody = document.getElementById('scanResultModalBody');
+                        const modalTitle = document.getElementById('scanResultModalLabel');
+                        if (data.success) {
+                            modalTitle.innerText = 'Success';
+                            modalBody.innerHTML = `<p>${data.message}</p>`;
+                        } else {
+                            modalTitle.innerText = 'Error';
+                            modalBody.innerHTML = `<p>${data.message}</p>`;
+                        }
+                        var myModal = new bootstrap.Modal(document.getElementById('scanResultModal'), {});
+                        myModal.show();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        const modalBody = document.getElementById('scanResultModalBody');
+                        const modalTitle = document.getElementById('scanResultModalLabel');
                         modalTitle.innerText = 'Error';
-                        modalBody.innerHTML = `<p>${data.message}</p>`;
-                    }
-                    var myModal = new bootstrap.Modal(document.getElementById('scanResultModal'), {});
-                    myModal.show();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    const modalBody = document.getElementById('scanResultModalBody');
-                    const modalTitle = document.getElementById('scanResultModalLabel');
-                    modalTitle.innerText = 'Error';
-                    modalBody.innerHTML = `<p>An error occurred.</p>`;
-                    var myModal = new bootstrap.Modal(document.getElementById('scanResultModal'), {});
-                    myModal.show();
+                        modalBody.innerHTML = `<p>An error occurred while sending data to the server.</p>`;
+                        var myModal = new bootstrap.Modal(document.getElementById('scanResultModal'), {});
+                        myModal.show();
+                    });
+                }).catch((err) => {
+                    console.error("Failed to stop scanning.", err);
                 });
             }
 
-            var html5QrcodeScanner = new Html5QrcodeScanner(
-                "qr-reader", { fps: 10, qrbox: 250 });
-            html5QrcodeScanner.render(onScanSuccess);
+            function onScanFailure(error) {
+                // handle scan failure, usually better to ignore and keep scanning.
+                // console.warn(`Code scan error = ${error}`);
+            }
+            
+            // Request camera permissions and start scanning.
+            html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
+                .catch(err => {
+                    console.error("Unable to start scanning.", err);
+                    const modalBody = document.getElementById('scanResultModalBody');
+                    const modalTitle = document.getElementById('scanResultModalLabel');
+                    modalTitle.innerText = 'Camera Error';
+                    modalBody.innerHTML = `<p>Could not start camera. Please grant camera permissions and refresh the page.</p><p><i>${err}</i></p>`;
+                    var myModal = new bootstrap.Modal(document.getElementById('scanResultModal'), {});
+                    myModal.show();
+                });
         });
     </script>
     {% endblock %}
