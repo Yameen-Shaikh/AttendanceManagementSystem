@@ -1,5 +1,8 @@
 from .base import *
 
+# TEMPORARY - Hardcoded secret key for debugging
+SECRET_KEY = 'temporary-secret-key-for-debugging-purposes-please-change'
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
