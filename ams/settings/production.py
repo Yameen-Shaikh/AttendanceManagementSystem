@@ -1,8 +1,5 @@
 from .base import *
 
-# Overriding SECRET_KEY directly for deployment
-SECRET_KEY = 'o&k+3v=ys()g+kotutf5vd1fl#vrbj3now)yds)+x4(0(*5=gn'
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
