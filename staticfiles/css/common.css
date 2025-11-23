@@ -1,0 +1,116 @@
+/* General body styling for anonymous pages */
+body {
+    background-color: #f0f2f5;
+    background-image:url("bg5.jpeg") ;
+    font-family: 'Poppins', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    padding: 0 15px; /* Add padding to the body for smaller screens */
+}
+
+/* Card styling for login/register forms */
+.login-card {
+    background: rgba(255, 255, 255, 0.2); /* More transparent background */
+    border-radius: 15px;
+    padding: 40px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Slightly stronger shadow */
+    width: 100%;
+    max-width: 450px;
+    backdrop-filter: blur(10px); /* Glass effect */
+    border: 1px solid rgba(255, 255, 255, 0.3); /* Light border for definition */
+}
+
+/* Gradient text for headings */
+.gradient-text {
+    background: linear-gradient(to right, #496978);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+/* Form styling */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #555;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+/* Button styling */
+.btn-primary {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    background: linear-gradient(to right,#496978);
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: opacity 0.3s;
+}
+
+.btn-primary:hover {
+    opacity: 0.9;
+}
+
+/* Messages styling for errors/info */
+.messages {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 20px;
+}
+
+.messages li {
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.messages li.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.messages li.error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.messages li.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+/* Link to other pages */
+.text-center a {
+    color: white;
+    text-decoration: none;
+}
+
+.text-center a:hover {
+    text-decoration: underline;
+}
+
+/* Media query for responsiveness */
+@media (max-width: 576px) {
+    .login-card {
+        padding: 20px; /* Reduce padding on smaller screens */
+        margin: 0 15px; /* Add margin to avoid touching screen edges */
+    }
+}
