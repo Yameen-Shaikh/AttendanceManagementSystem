@@ -43,6 +43,7 @@ class Lecture(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='lectures')
     date = models.DateField()
     time = models.TimeField()
+    is_archived = models.BooleanField(default=False, help_text="Set to true to hide from active lists.")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

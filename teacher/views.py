@@ -234,7 +234,8 @@ def view_lectures(request, subject_id): # Changed from class_id
     if request.user.role != 'Teacher' or subject.teacher != request.user:
         raise PermissionDenied
     
-    lectures = Lecture.objects.filter(subject=subject).order_by('-date', '-time') # Filter by subject
+    # Show only active (non-archived) lectures
+    lectures = Lecture.objects.filter(subject=subject, is_archived=False).order_by('-date', '-time')
     
     context = {
         'subject': subject, # Pass subject to template
@@ -257,19 +258,20 @@ def prune_lectures_view(request):
 
     cutoff_date = timezone.now() - timedelta(days=days_to_keep)
 
-    # We should only prune lectures for the subjects taught by the current teacher
-    old_lectures = Lecture.objects.filter(
-        subject__teacher=request.user, # Changed from class_obj__subjects__teacher
-        date__lt=cutoff_date
+    # Archive old lectures instead of deleting
+    lectures_to_archive = Lecture.objects.filter(
+        subject__teacher=request.user,
+        date__lt=cutoff_date,
+        is_archived=False # Only archive ones that aren't already archived
     )
     
-    count = old_lectures.count()
+    count = lectures_to_archive.count()
 
     if count == 0:
-        messages.info(request, 'No old lectures found to delete.')
+        messages.info(request, 'No old lectures found to archive.')
     else:
-        old_lectures.delete()
-        messages.success(request, f'Successfully deleted {count} old lecture record(s).')
+        lectures_to_archive.update(is_archived=True)
+        messages.success(request, f'Successfully archived {count} old lecture record(s).')
 
     # Redirect back to the page the user came from.
     return redirect(request.META.get('HTTP_REFERER', 'teacher:teacher_dashboard'))
