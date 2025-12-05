@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from teacher.models import Course
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -32,6 +33,7 @@ class CustomUser(AbstractUser):
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    course = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True, blank=True)
     subjects = models.TextField(blank=True, null=True)
     roll_no = models.CharField(max_length=20, null=True, blank=True)
 

@@ -51,15 +51,23 @@ class Lecture(models.Model):
 
 
 class Attendance(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    )
+
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     lecture = models.ForeignKey(Lecture, on_delete=models.SET_NULL, related_name='attendances', null=True, blank=True)
     subject = models.ForeignKey(Subject, on_delete=models.SET_NULL, null=True, blank=True)
     date = models.DateField(null=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    rejection_reason = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         lecture_info = self.lecture if self.lecture else f"{self.subject.name if self.subject else 'Unknown'} on {self.date}"
-        return f"{self.student.name} - {lecture_info}"
+        return f"{self.student.name} - {lecture_info} ({self.get_status_display()})"
 
 class HistoricalAttendance(Attendance):
     class Meta:

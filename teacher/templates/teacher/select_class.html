@@ -19,19 +19,16 @@
 
             <form id="select-class-form">
                 <div class="mb-3">
-                    <label for="course-select" class="form-label">Course</label>
-                    <select id="course-select" class="form-select">
-                        <option selected disabled>Select a course</option>
-                        {% for course in courses %}
-                            <option value="{{ course.id }}">{{ course.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="mb-3">
                     <label for="class-select" class="form-label">Class</label>
-                    <select id="class-select" class="form-select" disabled>
+                    <select id="class-select" class="form-select">
                         <option selected disabled>Select a class</option>
+                        {% for course in courses %}
+                            <optgroup label="{{ course.name }}">
+                                {% for class in course.active_classes %}
+                                    <option value="{{ class.id }}">{{ class.name }}</option>
+                                {% endfor %}
+                            </optgroup>
+                        {% endfor %}
                     </select>
                 </div>
 
@@ -44,33 +41,6 @@
 </div>
 
 <script>
-document.getElementById('course-select').addEventListener('change', function() {
-    const courseId = this.value;
-    const classSelect = document.getElementById('class-select');
-    const addSubjectBtn = document.getElementById('add-subject-btn');
-
-    classSelect.innerHTML = '<option selected disabled>Loading...</option>';
-    classSelect.disabled = false;
-    addSubjectBtn.href = '#';
-
-    fetch(`/teacher/get-classes/${courseId}/`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.classes.length > 0) {
-                classSelect.innerHTML = '<option selected disabled>Select a class</option>';
-                data.classes.forEach(class_ => {
-                    const option = document.createElement('option');
-                    option.value = class_.id;
-                    option.textContent = class_.name;
-                    classSelect.appendChild(option);
-                });
-            } else {
-                classSelect.innerHTML = '<option selected disabled>No class yet</option>';
-                addSubjectBtn.href = '#';
-            }
-        });
-});
-
 document.getElementById('class-select').addEventListener('change', function() {
     const classId = this.value;
     const addSubjectBtn = document.getElementById('add-subject-btn');

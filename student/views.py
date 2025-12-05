@@ -44,7 +44,8 @@ def get_attendance_calendar_data(request):
 
     attended_lectures = Attendance.objects.filter(
         student=student,
-        lecture__in=lectures
+        lecture__in=lectures,
+        status='approved'
     ).values_list('lecture_id', flat=True)
 
     events = []
@@ -58,8 +59,6 @@ def get_attendance_calendar_data(request):
         })
 
     return JsonResponse(events, safe=False)
-
-from .email import send_attendance_confirmation_email
 
 @login_required
 @require_POST
@@ -90,28 +89,40 @@ def mark_attendance(request):
         subject = lecture.subject
         class_obj = subject.class_obj
         
-        # Check if the student is enrolled in the class
         if not student.enrolled_classes.filter(pk=class_obj.pk).exists():
             return JsonResponse({'success': False, 'message': f'You are not enrolled in {class_obj.name}.'})
 
-        # Use get_or_create to handle existing attendance gracefully
         attendance, created = Attendance.objects.get_or_create(
             student=student,
             lecture=lecture,
-            defaults={'subject': subject, 'date': lecture.date}
+            defaults={'subject': subject, 'date': lecture.date, 'status': 'pending'}
         )
 
         if created:
-            # Send confirmation email for new attendance records
-            send_attendance_confirmation_email(student, lecture)
-
-        message = f'Attendance marked for {subject.name}.'
+            # Send real-time notification to the teacher's live attendance page
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f"attendance_{lecture.id}",
+                {
+                    "type": "attendance_update",
+                    "data": {
+                        "student_name": student.name,
+                        "attendance_id": attendance.id,
+                        "status": "pending"
+                    }
+                }
+            )
+            message = f'Your attendance for {subject.name} has been recorded and is pending approval.'
+        else:
+            message = f'You have already scanned the code for {subject.name}. Your attendance is pending approval.'
 
         return JsonResponse({'success': True, 'message': message})
 
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'message': 'Invalid JSON data.'})
     except Exception as e:
+        # Log the error for debugging
+        print(f"Error in mark_attendance: {e}")
         return JsonResponse({'success': False, 'message': 'An unexpected error occurred.'})
 
 @ensure_csrf_cookie
@@ -160,7 +171,7 @@ def student_dashboard(request):
     if enrolled_classes.exists():
         for class_obj in enrolled_classes:
             total_lectures = Lecture.objects.filter(subject__class_obj=class_obj).count()
-            attended_lectures = Attendance.objects.filter(lecture__subject__class_obj=class_obj, student=request.user).count()
+            attended_lectures = Attendance.objects.filter(lecture__subject__class_obj=class_obj, student=request.user, status='approved').count()
             attendance_percentage = (attended_lectures / total_lectures) * 100 if total_lectures > 0 else 0
             enrollments.append({
                 'class_obj': class_obj,
@@ -260,7 +271,8 @@ def get_attendance_by_date(request):
 
     attended_lectures = Attendance.objects.filter(
         student=student,
-        lecture__in=lectures
+        lecture__in=lectures,
+        status='approved'
     ).values_list('lecture_id', flat=True)
 
     data = []
@@ -343,7 +355,8 @@ def get_student_subject_attendance_data(request):
 
     attended_lectures = Attendance.objects.filter(
         student=request.user,
-        lecture__subject=subject
+        lecture__subject=subject,
+        status='approved'
     ).count()
 
     return JsonResponse({
@@ -370,7 +383,8 @@ def get_student_attendance_trend(request):
 
     attended_lecture_ids = set(Attendance.objects.filter(
         student=request.user,
-        lecture__in=lectures
+        lecture__in=lectures,
+        status='approved'
     ).values_list('lecture_id', flat=True))
 
     labels = [lecture.date.strftime('%Y-%m-%d') for lecture in lectures]

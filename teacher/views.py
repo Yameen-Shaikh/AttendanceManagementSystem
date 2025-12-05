@@ -12,6 +12,9 @@ from django.db.models import Prefetch, Q
 from django.contrib.auth.hashers import make_password
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
+import json
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 @login_required
 def teacher_dashboard(request):
@@ -58,7 +61,6 @@ def select_class_view(request):
         messages.error(request, "There is no active academic session. Please contact an administrator.")
         return render(request, 'teacher/select_class.html', {'courses': []})
 
-    # Filter classes within the prefetch to only get those from the active session
     courses = Course.objects.prefetch_related(
         Prefetch(
             'classes',
@@ -67,7 +69,6 @@ def select_class_view(request):
         )
     ).all()
     
-    # Filter out courses that have no active classes
     courses_with_active_classes = [course for course in courses if hasattr(course, 'active_classes') and course.active_classes]
 
     context = {
@@ -120,7 +121,7 @@ def generate_qr_code(request, lecture_id):
         messages.info(request, "An active QR code already exists and is being displayed.")
     else:
         # If no active QR code, create a new one
-        expires_at = timezone.now() + timedelta(minutes=2)
+        expires_at = timezone.now() + timedelta(minutes=1)
         # Explicitly generate a UUID for qr_code_data
         new_qr_code_data = str(uuid.uuid4()) 
         qr_code = QRCode.objects.create(
@@ -130,10 +131,16 @@ def generate_qr_code(request, lecture_id):
         )
         messages.success(request, "A new QR code has been generated successfully.")
     
+    pending_attendances = Attendance.objects.filter(
+        lecture=lecture,
+        status='pending'
+    ).select_related('student')
+
     context = {
         'lecture': lecture,
         'qr_code_data': str(qr_code.qr_code_data),
         'expires_at': qr_code.expires_at.isoformat(),
+        'pending_students': pending_attendances,
     }
     return render(request, 'teacher/generate_qr.html', context)
 
@@ -153,7 +160,7 @@ def view_report(request, subject_id): # Changed from class_id
     total_attendance_sum = 0
 
     for student in students:
-        attended_lectures = Attendance.objects.filter(lecture__subject=subject, student=student).count() # Filter by subject
+        attended_lectures = Attendance.objects.filter(lecture__subject=subject, student=student, status='approved').count() # Filter by subject
         attendance_percentage = (attended_lectures / total_lectures) * 100 if total_lectures > 0 else 0
         total_attendance_sum += attendance_percentage
         student_reports.append({
@@ -180,10 +187,14 @@ def teacher_register_view(request):
         name = request.POST.get('name')
         email = request.POST.get('email')
         password = request.POST.get('password')
+        course_id = request.POST.get('course')
 
         if CustomUser.objects.filter(email=email).exists():
             messages.error(request, 'Email already exists.')
-            return render(request, 'teacher/register.html')
+            courses = Course.objects.all()
+            return render(request, 'teacher/register.html', {'courses': courses})
+
+        course = get_object_or_404(Course, pk=course_id)
 
         user = CustomUser.objects.create(
             name=name,
@@ -191,12 +202,14 @@ def teacher_register_view(request):
             password=make_password(password),
             role='Teacher',
             is_active=False, # Teachers need approval
+            course=course
         )
         
         messages.success(request, 'Registration successful. Your account is pending approval from an administrator.')
         return redirect('login')
 
-    return render(request, 'teacher/register.html')
+    courses = Course.objects.all()
+    return render(request, 'teacher/register.html', {'courses': courses})
 
 @login_required
 def profile(request):
@@ -298,7 +311,7 @@ def get_teacher_subject_attendance_data(request):
         return JsonResponse({'present': 0, 'absent': 0})
 
     total_possible_attendances = total_students * total_lectures
-    actual_attendances = Attendance.objects.filter(lecture__subject=subject).count()
+    actual_attendances = Attendance.objects.filter(lecture__subject=subject, status='approved').count()
 
     return JsonResponse({
         'present': actual_attendances,
@@ -328,7 +341,8 @@ def get_student_attendance_percentages(request):
     for student in students:
         attended_count = Attendance.objects.filter(
             lecture__subject=subject,
-            student=student
+            student=student,
+            status='approved'
         ).count()
         percentage = (attended_count / total_lectures) * 100 if total_lectures > 0 else 0
         student_percentages.append({
@@ -403,18 +417,23 @@ def search_students(request, lecture_id):
     else:
         students = CustomUser.objects.none() # Return no students if query is empty
 
-    # Get IDs of students who have already marked attendance for this lecture
-    attended_students_ids = Attendance.objects.filter(lecture=lecture).values_list('student_id', flat=True)
+    # Get attendance status for all students in the class for this lecture
+    attendance_records = Attendance.objects.filter(
+        lecture=lecture,
+        student__in=enrolled_students
+    ).values('student_id', 'status')
 
-    student_data = [
-        {
+    attendance_status_map = {rec['student_id']: rec['status'] for rec in attendance_records}
+
+    student_data = []
+    for student in students:
+        status = attendance_status_map.get(student.id)
+        student_data.append({
             'id': student.id,
             'name': student.name,
             'roll_no': student.roll_no,
-            'is_present': student.id in attended_students_ids
-        }
-        for student in students
-    ]
+            'attendance_status': status # Will be 'pending', 'approved', 'rejected', or None
+        })
 
     return JsonResponse({'students': student_data})
 
@@ -446,12 +465,146 @@ def manual_mark_attendance(request, lecture_id):
     attendance, created = Attendance.objects.get_or_create(
         student=student,
         lecture=lecture,
-        defaults={'subject': lecture.subject, 'date': lecture.date}
+        defaults={'subject': lecture.subject, 'date': lecture.date, 'status': 'approved'}
     )
 
     if created:
-        # Send confirmation email for new attendance records
-        send_attendance_confirmation_email(student, lecture)
         return JsonResponse({'success': True, 'message': f'Attendance marked for {student.name}.'})
     else:
-        return JsonResponse({'success': False, 'message': f'Attendance already marked for {student.name}.'})
+        # If attendance already existed, ensure it's marked as approved
+        if attendance.status != 'approved':
+            attendance.status = 'approved'
+            attendance.save()
+        return JsonResponse({'success': True, 'message': f'Attendance for {student.name} is now approved.'})
+
+
+@login_required
+def get_pending_attendance(request, lecture_id):
+    if request.user.role != 'Teacher':
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+
+    lecture = get_object_or_404(Lecture, pk=lecture_id)
+
+    if lecture.subject.teacher != request.user:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+
+    pending_attendances = Attendance.objects.filter(
+        lecture=lecture,
+        status='pending'
+    ).select_related('student')
+
+    student_data = [
+        {
+            'attendance_id': att.id,
+            'student_id': att.student.id,
+            'name': att.student.name,
+            'roll_no': att.student.roll_no,
+            'timestamp': att.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        for att in pending_attendances
+    ]
+
+    return JsonResponse({'pending_students': student_data})
+
+
+@login_required
+@require_POST
+def approve_attendance(request, attendance_id):
+    if request.user.role != 'Teacher':
+        return JsonResponse({'success': False, 'message': 'Permission denied'}, status=403)
+
+    attendance = get_object_or_404(Attendance, pk=attendance_id)
+    lecture = attendance.lecture
+
+    if lecture.subject.teacher != request.user:
+        return JsonResponse({'success': False, 'message': 'Permission denied'}, status=403)
+
+    attendance.status = 'approved'
+    attendance.save()
+    
+    # Notify student
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f"student_{attendance.student.id}",
+        {
+            "type": "attendance_status_update",
+            "message": {
+                "subject_name": lecture.subject.name,
+                "status": "approved",
+            }
+        }
+    )
+
+    return JsonResponse({'success': True, 'message': 'Attendance approved.'})
+
+
+@login_required
+@require_POST
+def reject_attendance(request, attendance_id):
+    if request.user.role != 'Teacher':
+        return JsonResponse({'success': False, 'message': 'Permission denied'}, status=403)
+
+    attendance = get_object_or_404(Attendance, pk=attendance_id)
+    lecture = attendance.lecture
+
+    if lecture.subject.teacher != request.user:
+        return JsonResponse({'success': False, 'message': 'Permission denied'}, status=403)
+
+    try:
+        data = json.loads(request.body)
+        rejection_reason = data.get('reason', 'No reason provided.')
+    except json.JSONDecodeError:
+        rejection_reason = 'No reason provided.'
+
+    attendance.status = 'rejected'
+    attendance.rejection_reason = rejection_reason
+    attendance.save()
+
+    # Notify student
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f"student_{attendance.student.id}",
+        {
+            "type": "attendance_status_update",
+            "message": {
+                "subject_name": lecture.subject.name,
+                "status": "rejected",
+                "reason": rejection_reason,
+            }
+        }
+    )
+
+    return JsonResponse({'success': True, 'message': 'Attendance rejected.'})
+
+@login_required
+@require_POST
+def approve_all_attendance(request, lecture_id):
+    if request.user.role != 'Teacher':
+        return JsonResponse({'success': False, 'message': 'Permission denied'}, status=403)
+
+    lecture = get_object_or_404(Lecture, pk=lecture_id)
+
+    if lecture.subject.teacher != request.user:
+        return JsonResponse({'success': False, 'message': 'Permission denied'}, status=403)
+
+    pending_attendances = Attendance.objects.filter(lecture=lecture, status='pending')
+    
+    for attendance in pending_attendances:
+        attendance.status = 'approved'
+        attendance.save()
+        
+        # Notify student
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"student_{attendance.student.id}",
+            {
+                "type": "attendance_status_update",
+                "message": {
+                    "subject_name": lecture.subject.name,
+                    "status": "approved",
+                }
+            }
+        )
+
+    return JsonResponse({'success': True, 'message': 'All pending attendances have been approved.'})
+

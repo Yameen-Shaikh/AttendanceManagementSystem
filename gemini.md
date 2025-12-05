@@ -427,3 +427,21 @@ To handle cases where students cannot scan a QR code, teachers can now mark atte
     - Fixed an issue where messages on the attendance performance card were not displayed correctly.
     - Added percentage labels to the pie charts on both the teacher and student report pages.
     - Removed decimal points from the percentage labels.
+
+## 25. Live Attendance with Teacher Approval
+
+- **Real-time Updates:** Implemented a real-time live attendance system using Django Channels. When a student scans a QR code, their name appears on the teacher's "Live Lecture Panel" for approval.
+- **Teacher Approval Workflow:**
+    - Teachers can approve or reject attendance for each student individually.
+    - An "Approve All" button allows teachers to approve all pending attendances at once.
+- **Student Notifications:** Students receive real-time notifications when their attendance is approved or rejected.
+- **QR Code Expiration:** The QR code expiration time has been set to 1 minute.
+
+## 26. Teacher Registration and Subject Management
+
+- **Teacher Registration:**
+    - Added a "Select Course" dropdown to the teacher registration page.
+    - The `CustomUser` model was extended to include a `course` field to store the teacher's selected course.
+- **Add Subject Page:**
+    - The "Add Subject" page was simplified to remove the course selection dropdown.
+    - The page now only requires the teacher to select a class to add a subject to.
