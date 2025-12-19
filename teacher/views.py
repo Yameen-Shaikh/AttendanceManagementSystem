@@ -118,7 +118,6 @@ def generate_qr_code(request, lecture_id):
 
     if active_qr_code:
         qr_code = active_qr_code
-        messages.info(request, "An active QR code already exists and is being displayed.")
     else:
         # If no active QR code, create a new one
         expires_at = timezone.now() + timedelta(minutes=1)
@@ -129,7 +128,6 @@ def generate_qr_code(request, lecture_id):
             qr_code_data=new_qr_code_data, # Assign the generated UUID
             expires_at=expires_at
         )
-        messages.success(request, "A new QR code has been generated successfully.")
     
     pending_attendances = Attendance.objects.filter(
         lecture=lecture,
