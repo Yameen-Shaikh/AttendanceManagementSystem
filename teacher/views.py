@@ -87,7 +87,7 @@ def create_subject_view(request, class_id):
         subject_name = request.POST.get('name')
         if subject_name:
             Subject.objects.create(name=subject_name, class_obj=class_obj, teacher=request.user)
-            messages.success(request, f'Subject "{subject_name}" created for {class_obj.name}.')
+            
             return redirect('teacher:teacher_dashboard')
         else:
             messages.error(request, 'Subject name cannot be empty.')
@@ -226,7 +226,7 @@ def schedule_lecture_view(request, subject_id): # Changed from class_id
         time = request.POST.get('time')
         if date and time:
             Lecture.objects.create(subject=subject, date=date, time=time) # Use subject
-            messages.success(request, f'Lecture scheduled successfully for {subject.name} in {subject.class_obj.name}.')
+            
             return redirect('teacher:teacher_dashboard') # Or maybe to a lecture list view
         else:
             messages.error(request, 'Date and time cannot be empty.')

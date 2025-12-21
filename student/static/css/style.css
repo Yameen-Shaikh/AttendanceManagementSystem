@@ -269,3 +269,15 @@ p {
 .btn-close {
     filter: invert(1); /* Make the close button white */
 }
+
+.gradient-text {
+    background: linear-gradient(45deg, #8A2BE2, #4169E1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.navbar-brand.gradient-text {
+    transform: rotate(-40deg);
+    font-size: 1.2rem;
+    line-height: 1;
+}

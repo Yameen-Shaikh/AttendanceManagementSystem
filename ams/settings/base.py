@@ -151,3 +151,4 @@ AUTH_USER_MODEL = 'student.CustomUser'
 # EMAIL_HOST_USER = 'your-email@gmail.com'  # Your email address
 # EMAIL_HOST_PASSWORD = 'your-app-password'  # Your email app password
 # DEFAULT_FROM_EMAIL = 'your-email@gmail.com'
+

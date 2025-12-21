@@ -58,6 +58,12 @@ p {
     -webkit-text-fill-color: transparent;
 }
 
+.navbar-brand.gradient-text {
+    transform: rotate(-40deg);
+    font-size: 1.2rem;
+    line-height: 1;
+}
+
 .gradient-title {
     color: #333;
     font-weight: 700;
